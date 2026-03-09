@@ -1,1 +1,4 @@
 coverage>=7.0
+rope>=1.14
+fastapi>=0.104
+uvicorn>=0.24
