@@ -580,13 +580,18 @@ class RiskScorer:
         )
 
         score = round(min(raw, 1.0), 4)
-        tier = (
-            "LOW" if score < 0.25 else
-            "MEDIUM" if score < 0.50 else
-            "HIGH" if score < 0.75 else
-            "CRITICAL"
-        )
-        return score, tier
+        return score, self._tier(score)
+
+    @staticmethod
+    def _tier(score: float) -> str:
+        """Convert a 0.0–1.0 score into a human-readable risk tier."""
+        if score < 0.25:
+            return "LOW"
+        if score < 0.50:
+            return "MEDIUM"
+        if score < 0.75:
+            return "HIGH"
+        return "CRITICAL"
 
 
 # ---------------------------------------------------------------------------
