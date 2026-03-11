@@ -1,9 +1,6 @@
 import React from 'react';
 import BlastRadiusGraph from './components/BlastRadiusGraph';
-import PostMortemTimeline from './components/PostMortemTimeline';
-import LLMPanel from './components/LLMPanel';
-import MergeBadge from './components/MergeBadge';
-import { blastRadiusData, postMortemData, llmAnalysisData, mergeBadgeData } from './data/mockData';
+import { blastRadiusData, mergeBadgeData } from './data/mockData';
 
 export default function App() {
   return (
@@ -17,8 +14,6 @@ export default function App() {
             <div className="app-header__subtitle">Pre-Merge Intelligence</div>
           </div>
         </div>
-
-        <MergeBadge data={mergeBadgeData} />
 
         <div className="app-header__meta">
           <div className="app-header__pr-info">
@@ -35,11 +30,11 @@ export default function App() {
         {/* Panel 1 — Blast Radius (full width) */}
         <BlastRadiusGraph data={blastRadiusData} />
 
-        {/* Panel 2 — Post Mortem Timeline */}
-        <PostMortemTimeline data={postMortemData} />
+        {/* Panel 2 — Post Mortem Timeline (Week 3) */}
+        {/* TODO: PostMortemTimeline component */}
 
-        {/* Panel 3 — LLM Risk Analysis */}
-        <LLMPanel data={llmAnalysisData} />
+        {/* Panel 3 — LLM Risk Analysis (Week 3) */}
+        {/* TODO: LLMPanel component */}
       </main>
 
       {/* ═══ Footer ═══ */}
