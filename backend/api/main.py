@@ -113,7 +113,7 @@ class AnalyzeRequest(BaseModel):
     repo_root: str
     changed_symbols: list[str]
     coverage_file: str | None = None
-    use_rope: bool = True
+    use_rope: bool = True  # API layer opts in — engine default is False
 
     @field_validator("repo_root")
     @classmethod

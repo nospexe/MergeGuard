@@ -54,7 +54,7 @@ from typing import Optional
 
 try:
     from rope.base.project import Project as RopeProject
-    from rope.contrib.findit import find_usages as rope_find_usages
+    from rope.contrib.findit import find_occurrences as rope_find_usages
     ROPE_AVAILABLE = True
 except ImportError:  # pragma: no cover
     ROPE_AVAILABLE = False
@@ -781,7 +781,7 @@ def analyze_blast_radius(
     repo_root: str | Path,
     changed_symbols: list[str],
     uncovered_nodes: Optional[list[str]] = None,
-    use_rope: bool = True,
+    use_rope: bool = False,
 ) -> BlastRadiusResult:
     """
     Run the full BlastRadius pipeline for a set of changed symbols.
