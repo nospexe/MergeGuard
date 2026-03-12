@@ -1,13 +1,124 @@
 import asyncio
+import json
+import os
+from dataclasses import asdict
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from collections import Counter
+
+from engines.blast_radius import analyze_blast_radius
+from engines.post_mortem import mine_association_rules
 from utils.path_validator import validate_repo_path
 
+load_dotenv()
+OLLAMA_HOST  = os.getenv("OLLAMA_HOST",  "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "deepseek-coder")
+
+
+def translate_blast_radius(result) -> dict:
+
+    raw = asdict(result)
+
+    nodes = []
+
+    for i, symbol in enumerate(raw["changed_symbols"]):
+        nodes.append({
+            "id": f"n{i}",
+            "file": symbol.replace(".", "/") + ".py",
+            "symbol": symbol.split(".")[-1],
+            "coverage_status": "covered",
+            "ring": 0
+        })
+
+    offset = len(nodes)
+    for i, module in enumerate(raw["direct_dependents"]):
+        nodes.append({
+            "id": f"n{offset + i}",
+            "file": module.replace(".", "/") + ".py",
+            "symbol": module.split(".")[-1],
+            "coverage_status": (
+                "uncovered" if module in raw["uncovered_nodes"] else "covered"
+            ),
+            "ring": 1
+        })
+
+    offset = len(nodes)
+
+    for i, module in enumerate(raw["transitive_dependents"]):
+        nodes.append({
+            "id": f"n{offset + i}",
+            "file": module.replace(".", "/") + ".py",
+            "symbol": module.split(".")[-1],
+            "coverage_status": (
+                "uncovered" if module in raw["uncovered_nodes"] else "partial"
+            ),
+            "ring": 2
+        })
+
+    module_to_id = {node["file"]: node["id"] for node in nodes}
+
+    edges = []
+    for edge in raw["dependency_edges"]:
+        source_file = edge["from"].replace(".", "/") + ".py"
+        target_file = edge["to"].replace(".", "/") + ".py"
+        if source_file in module_to_id and target_file in module_to_id:
+            edges.append({
+                "source": module_to_id[source_file],
+                "target": module_to_id[target_file]
+            })
+
+    tier_map = {
+        "LOW":      "low",
+        "MEDIUM":   "medium",
+        "HIGH":     "high",
+        "CRITICAL": "high"  
+    }
+    risk_level = tier_map.get(raw["risk_tier"], "medium")
+
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "risk_score": raw["risk_score"],
+        "risk_level": risk_level
+    }
+
+
+def translate_postmortem(rules: list[dict]) -> dict:
+    matches = []
+    all_files = set()
+
+    for i, rule in enumerate(rules):
+
+        involved_files = list(rule["antecedents"]) + list(rule["consequents"])
+        all_files.update(involved_files)
+
+        support_count = max(1, round(rule["support"] * 500))
+
+        matches.append({
+            "pattern_id": f"FP-{i + 1:03d}",     
+            "files": involved_files,
+            "support": support_count,
+            "confidence": rule["confidence"],
+            "evidence_commits": []                  
+        })
+
+
+    file_counts = Counter(
+        f for rule in rules
+        for f in list(rule["antecedents"]) + list(rule["consequents"])
+    )
+    top_risk_files = [f for f, _ in file_counts.most_common(5)]
+
+    return {
+        "matches": matches,
+        "top_risk_files": top_risk_files
+    }
 
 
 app = FastAPI(
@@ -88,37 +199,19 @@ def get_blast_radius(req: AnalyzeRequest):
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
-    return BlastRadiusResponse(
-        nodes=[
-            BlastRadiusNode(
-                id="n0",
-                file="auth/login.py",
-                symbol="authenticate",
-                coverage_status="covered",
-                ring=0
-            ),
-            BlastRadiusNode(
-                id="n1",
-                file="auth/session.py",
-                symbol="create_session",
-                coverage_status="partial",
-                ring=1
-            ),
-            BlastRadiusNode(
-                id="n2",
-                file="api/user_routes.py",
-                symbol="get_user",
-                coverage_status="uncovered",
-                ring=2
-            ),
-        ],
-        edges=[
-            BlastRadiusEdge(source="n0", target="n1"),
-            BlastRadiusEdge(source="n1", target="n2"),
-        ],
-        risk_score=0.62,
-        risk_level="medium"
-    )
+    try:
+        result = analyze_blast_radius(
+            repo_root=req.repo_path,
+            changed_symbols=[req.pr_branch], 
+            uncovered_nodes=[],
+            use_rope=False
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"BlastRadius engine error: {str(e)}")
+    translated = translate_blast_radius(result)
+    return BlastRadiusResponse(**translated)
+
+
 
 @app.post("/api/postmortem", response_model=PostMortemResponse)
 def get_postmortem(req: AnalyzeRequest):
@@ -127,36 +220,20 @@ def get_postmortem(req: AnalyzeRequest):
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
-    return PostMortemResponse(
-        matches=[
-            FingerprintMatch(
-                pattern_id="FP-042",
-                files=["auth/login.py", "auth/session.py"],
-                support=7,
-                confidence=0.78,
-                evidence_commits=[
-                    "a1b2c3d",
-                    "e4f5g6h",
-                    "i7j8k9l"
-                ]
-            ),
-            FingerprintMatch(
-                pattern_id="FP-017",
-                files=["auth/login.py", "db/user_model.py"],
-                support=4,
-                confidence=0.61,
-                evidence_commits=[
-                    "m1n2o3p",
-                    "q4r5s6t"
-                ]
-            ),
-        ],
-        top_risk_files=[
-            "auth/login.py",
-            "auth/session.py",
-            "db/user_model.py"
-        ]
-    )
+    try:
+        rules = mine_association_rules(
+            repo_path=req.repo_path,
+            min_support=0.02,
+            min_confidence=0.5
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PostMortem engine error: {str(e)}")
+
+    if not rules:
+        return PostMortemResponse(matches=[], top_risk_files=[])
+
+    translated = translate_postmortem(rules)
+    return PostMortemResponse(**translated)
 
 @app.post("/api/analyze/stream")
 async def analyze_stream(req: AnalyzeRequest):
@@ -165,31 +242,73 @@ async def analyze_stream(req: AnalyzeRequest):
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
+    try:
+        blast_result = analyze_blast_radius(
+            repo_root=req.repo_path,
+            changed_symbols=[req.pr_branch],
+            uncovered_nodes=[],
+            use_rope=False
+        )
+        blast_data = asdict(blast_result)
+    except Exception as e:
+        blast_data = {"error": str(e)}
+
+    try:
+        postmortem_data = mine_association_rules(
+            repo_path=req.repo_path,
+            min_support=0.02,
+            min_confidence=0.5
+        )
+    except Exception as e:
+        postmortem_data = {"error": str(e)}
+
+
+    prompt = f"""You are a senior engineering lead reviewing a pull request.
+
+BLAST RADIUS ANALYSIS:
+{json.dumps(blast_data, indent=2)}
+
+HISTORICAL PATTERN ANALYSIS:
+{json.dumps(postmortem_data, indent=2)}
+
+Based on the above data:
+1. Summarise the structural risk from the blast radius in 2 sentences.
+2. Summarise the historical pattern risk in 2 sentences.
+3. Give a final verdict: exactly one of GREEN, YELLOW, or RED.
+   GREEN = safe to merge. YELLOW = review recommended. RED = do not merge.
+4. State one concrete action the developer must take.
+
+Do not invent file names or commit hashes not present in the data above.
+Keep your total response under 120 words."""
+
     async def token_generator():
-        stub_tokens = [
-            "Analyzing", " blast", " radius", " for",
-            " branch", f" '{req.pr_branch}'...\n\n",
-            "Found", " 3", " affected", " symbols.\n\n",
-            "Checking", " historical", " failure", " patterns...\n\n",
-            "Pattern", " FP-042", " matched", " with", " 78%", " confidence.\n\n",
-            "VERDICT:", " YELLOW", " —", " Review", " recommended",
-            " before", " merging."
-        ]
+        try:
+            import ollama
+            client = ollama.AsyncClient(host=OLLAMA_HOST)
+            async for chunk in await client.chat(
+                model=OLLAMA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                stream=True
+            ):
+                token = chunk["message"]["content"]
+                if token:
+                    yield f"data: {token}\n\n"
 
-        for token in stub_tokens:
-            yield f"data: {token}\n\n"
-            await asyncio.sleep(0.05)   
+        except Exception as e:
+            yield f"data: [ERROR] LLM unavailable: {str(e)}\n\n"
 
-        yield "data: [DONE]\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         token_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"  
+            "X-Accel-Buffering": "no"
         }
     )
+
 
 @app.post("/api/recommendation", response_model=RecommendationResponse)
 def get_recommendation(req: AnalyzeRequest):
@@ -198,24 +317,71 @@ def get_recommendation(req: AnalyzeRequest):
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
-    return RecommendationResponse(
-        verdict="YELLOW",
-        summary=(
-            "This PR modifies the authentication layer which has 2 transitive "
-            "dependents with incomplete test coverage. Historical patterns show "
-            "a 78% correlation between changes to auth/login.py and subsequent "
-            "bug-fix commits."
-        ),
-        blast_risk=(
-            "2 uncovered transitive dependents detected in api/user_routes.py."
-        ),
-        pattern_risk=(
-            "Pattern FP-042 matched — auth/login.py and auth/session.py were "
-            "changed together in 7 prior bug-fix commits."
+    try:
+        blast_result = analyze_blast_radius(
+            repo_root=req.repo_path,
+            changed_symbols=[req.pr_branch],
+            uncovered_nodes=[],
+            use_rope=False
         )
-    )
+        blast_data = asdict(blast_result)
+    except Exception as e:
+        blast_data = {"error": str(e)}
 
+    try:
+        postmortem_data = mine_association_rules(
+            repo_path=req.repo_path,
+            min_support=0.02,
+            min_confidence=0.5
+        )
+    except Exception as e:
+        postmortem_data = {"error": str(e)}
 
+    prompt = f"""You are a senior engineering lead making a merge decision.
+
+BLAST RADIUS DATA:
+{json.dumps(blast_data, indent=2)}
+
+HISTORICAL PATTERN DATA:
+{json.dumps(postmortem_data, indent=2)}
+
+Respond in this exact format and nothing else:
+VERDICT: <GREEN|YELLOW|RED>
+SUMMARY: <one paragraph, max 60 words>
+BLAST_RISK: <one sentence about structural risk>
+PATTERN_RISK: <one sentence about historical pattern risk>
+
+Do not add any text outside this format."""
+
+    try:
+        import ollama
+        client = ollama.Client(host=OLLAMA_HOST)
+        response = client.chat(
+            model=OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        raw = response["message"]["content"]
+
+        lines = {
+            line.split(":")[0].strip(): ":".join(line.split(":")[1:]).strip()
+            for line in raw.strip().splitlines()
+            if ":" in line
+        }
+
+        return RecommendationResponse(
+            verdict=lines.get("VERDICT", "YELLOW"),
+            summary=lines.get("SUMMARY", raw),
+            blast_risk=lines.get("BLAST_RISK", "Unable to parse blast risk."),
+            pattern_risk=lines.get("PATTERN_RISK", "Unable to parse pattern risk.")
+        )
+
+    except Exception as e:
+        return RecommendationResponse(
+            verdict="YELLOW",
+            summary=f"LLM unavailable: {str(e)}. Manual review recommended.",
+            blast_risk="Could not compute blast risk.",
+            pattern_risk="Could not compute pattern risk."
+        )
 
 
 
