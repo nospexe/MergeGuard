@@ -1,2 +1,43 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Coverage
+.coverage
+htmlcov/
+
+# Database files
+*.db
+*.sqlite3
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+
+# IDE settings
 .vscode/
-.vscode/
+.idea/
+
+# Pytest cache
+.pytest_cache/
+
+# Rope project files
+.ropeproject/
