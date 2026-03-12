@@ -1,4 +1,12 @@
 .vscode/
+__pycache__/
+*.pyc
+*.pyo
+.coverage
+*.egg-info/
+dist/
+build/
+.env
 # Bytecode
 __pycache__/
 *.py[cod]
