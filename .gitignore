@@ -41,3 +41,38 @@ node_modules/
 
 # Rope project files
 .ropeproject/
+node_modules/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+.coverage
+*.egg-info/
+dist/
+build/
+.env
+# Bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/

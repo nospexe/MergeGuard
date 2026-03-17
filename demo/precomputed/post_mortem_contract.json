@@ -1,0 +1,51 @@
+{
+  "contract_version": "1.0",
+  "engine": "post_mortem",
+  "description": "Output contract for the PostMortem engine. Defines the JSON structure that the FastAPI layer and LangGraph agents consume.",
+  "output": {
+    "commits": [
+      {
+        "sha": "a1b2c3d4",
+        "message": "fix login error",
+        "type": "bug-fix",
+        "files": ["backend/api/main.py", "backend/engines/post_mortem.py"],
+        "date": "2026-03-07T10:30:00+00:00"
+      }
+    ],
+    "association_rules": [
+      {
+        "antecedents": ["backend/api/main.py"],
+        "consequents": ["backend/engines/post_mortem.py"],
+        "support": 0.15,
+        "confidence": 0.75,
+        "lift": 2.5
+      }
+    ],
+    "fingerprints": [
+      {
+        "id": 1,
+        "antecedents": ["backend/api/main.py"],
+        "consequents": ["backend/engines/post_mortem.py"],
+        "support": 0.15,
+        "confidence": 0.75,
+        "lift": 2.5,
+        "repo_path": "./demo/repos/django",
+        "created_at": "2026-03-07T10:30:00"
+      }
+    ],
+    "pr_match": {
+      "matched": true,
+      "risk_tier": "HIGH",
+      "matching_fingerprints": [
+        {
+          "id": 1,
+          "antecedents": ["backend/api/main.py"],
+          "consequents": ["backend/engines/post_mortem.py"],
+          "confidence": 0.75,
+          "lift": 2.5
+        }
+      ],
+      "summary": "This PR touches files that have historically caused failures together 75% of the time."
+    }
+  }
+}
