@@ -1,6 +1,8 @@
 import React from 'react';
 import BlastRadiusGraph from './components/BlastRadiusGraph';
-import { blastRadiusData, mergeBadgeData } from './data/mockData';
+import PostMortemTimeline from './components/PostMortemTimeline';
+import LLMPanel from './components/LLMPanel';
+import { blastRadiusData, postMortemData, llmAnalysisData, mergeBadgeData } from './data/mockData';
 
 export default function App() {
   return (
@@ -30,11 +32,11 @@ export default function App() {
         {/* Panel 1 — Blast Radius (full width) */}
         <BlastRadiusGraph data={blastRadiusData} />
 
-        {/* Panel 2 — Post Mortem Timeline (Week 3) */}
-        {/* TODO: PostMortemTimeline component */}
+        {/* Panel 2 — Post Mortem Timeline */}
+        <PostMortemTimeline data={postMortemData} />
 
-        {/* Panel 3 — LLM Risk Analysis (Week 3) */}
-        {/* TODO: LLMPanel component */}
+        {/* Panel 3 — LLM Risk Analysis */}
+        <LLMPanel data={llmAnalysisData} badgeData={mergeBadgeData} />
       </main>
 
       {/* ═══ Footer ═══ */}
