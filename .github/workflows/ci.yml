@@ -31,6 +31,7 @@ jobs:
       - name: Run BlastRadius + CoverageOverlay tests (pytest)
         run: |
           cd backend
+<<<<<<< Updated upstream
           pytest tests/test_blast_radius.py tests/test_coverage_overlay.py -v
 
       - name: Run API tests (pytest)
@@ -47,3 +48,6 @@ jobs:
         run: |
           cd backend
           python3 run_tests.py
+=======
+          pytest tests/test_blast_radius.py tests/test_coverage_overlay.py tests/test_api.py -v
+>>>>>>> Stashed changes
