@@ -27,8 +27,17 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx ruff
+
+      - name: Lint
+        run: |
+          cd backend
+          ruff check .
 
       - name: Run tests
         run: |
           cd backend
-          python3 run_tests.py
+          pytest tests/ -v
+        env:
+          OLLAMA_HOST: "http://localhost:11434"
+          OLLAMA_MODEL: "deepseek-coder"
