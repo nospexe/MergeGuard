@@ -12,7 +12,7 @@ from engines.post_mortem import (
     mine_association_rules,
 )
 
-REPO_PATH = str(Path(__file__).parent.parent.parent)
+
 
 
 def test_fix_keyword_returns_bug_fix():
@@ -55,16 +55,16 @@ def test_mixed_case_message_is_handled_correctly():
     assert classify_commit("Refactor Login Flow") == "refactor"
 
 
-def test_mine_commits_returns_a_list():
-    commits = mine_commits(REPO_PATH)
+def test_mine_commits_returns_a_list(valid_repo):
+    commits = mine_commits(str(valid_repo))
     assert isinstance(commits, list)
 
-def test_mine_commits_returns_at_least_1_commit():
-    commits = mine_commits(REPO_PATH)
+def test_mine_commits_returns_at_least_1_commit(valid_repo):
+    commits = mine_commits(str(valid_repo))
     assert len(commits) >= 1
 
-def test_each_commit_has_required_keys():
-    commits = mine_commits(REPO_PATH)
+def test_each_commit_has_required_keys(valid_repo):
+    commits = mine_commits(str(valid_repo))
     for c in commits:
         assert "sha" in c
         assert "message" in c
@@ -72,45 +72,45 @@ def test_each_commit_has_required_keys():
         assert "files" in c
         assert "date" in c
 
-def test_sha_is_8_characters_long():
-    commits = mine_commits(REPO_PATH)
+def test_sha_is_8_characters_long(valid_repo):
+    commits = mine_commits(str(valid_repo))
     for c in commits:
         assert len(c["sha"]) == 8
 
-def test_type_is_always_bug_fix_refactor_or_feature():
-    commits = mine_commits(REPO_PATH)
+def test_type_is_always_bug_fix_refactor_or_feature(valid_repo):
+    commits = mine_commits(str(valid_repo))
     for c in commits:
         assert c["type"] in ["bug-fix", "refactor", "feature"]
 
-def test_files_is_always_a_list():
-    commits = mine_commits(REPO_PATH)
+def test_files_is_always_a_list(valid_repo):
+    commits = mine_commits(str(valid_repo))
     for c in commits:
         assert isinstance(c["files"], list)
 
-def test_date_is_a_non_empty_string():
-    commits = mine_commits(REPO_PATH)
+def test_date_is_a_non_empty_string(valid_repo):
+    commits = mine_commits(str(valid_repo))
     for c in commits:
         assert isinstance(c["date"], str)
         assert len(c["date"]) > 0
 
-def test_mine_commits_output_is_json_serialisable():
-    commits = mine_commits(REPO_PATH)
+def test_mine_commits_output_is_json_serialisable(valid_repo):
+    commits = mine_commits(str(valid_repo))
     parsed = json.loads(json.dumps(commits))
     assert isinstance(parsed, list)
 
 
-def test_table_has_same_number_of_rows_as_commits():
-    commits = mine_commits(REPO_PATH)
+def test_table_has_same_number_of_rows_as_commits(valid_repo):
+    commits = mine_commits(str(valid_repo))
     df = build_transaction_table(commits)
     assert len(df) == len(commits)
 
-def test_table_columns_are_all_file_names():
-    commits = mine_commits(REPO_PATH)
+def test_table_columns_are_all_file_names(valid_repo):
+    commits = mine_commits(str(valid_repo))
     df = build_transaction_table(commits)
     assert len(df.columns) > 0
 
-def test_table_values_are_all_boolean():
-    commits = mine_commits(REPO_PATH)
+def test_table_values_are_all_boolean(valid_repo):
+    commits = mine_commits(str(valid_repo))
     df = build_transaction_table(commits)
     for col in df.columns:
         assert df[col].dtype == bool
@@ -125,12 +125,12 @@ def test_commit_with_no_files_produces_all_false_row():
     assert len(df) == 1
 
 
-def test_mine_association_rules_returns_a_list():
-    rules = mine_association_rules(REPO_PATH)
+def test_mine_association_rules_returns_a_list(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     assert isinstance(rules, list)
 
-def test_rule_each_has_required_keys():
-    rules = mine_association_rules(REPO_PATH)
+def test_rule_each_has_required_keys(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert "antecedents" in r
         assert "consequents" in r
@@ -138,32 +138,32 @@ def test_rule_each_has_required_keys():
         assert "confidence" in r
         assert "lift" in r
 
-def test_confidence_is_always_between_0_and_1():
-    rules = mine_association_rules(REPO_PATH)
+def test_confidence_is_always_between_0_and_1(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert 0 <= r["confidence"] <= 1
 
-def test_support_is_always_between_0_and_1():
-    rules = mine_association_rules(REPO_PATH)
+def test_support_is_always_between_0_and_1(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert 0 <= r["support"] <= 1
 
-def test_lift_is_always_positive():
-    rules = mine_association_rules(REPO_PATH)
+def test_lift_is_always_positive(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert r["lift"] > 0
 
-def test_antecedents_is_always_a_list():
-    rules = mine_association_rules(REPO_PATH)
+def test_antecedents_is_always_a_list(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert isinstance(r["antecedents"], list)
 
-def test_consequents_is_always_a_list():
-    rules = mine_association_rules(REPO_PATH)
+def test_consequents_is_always_a_list(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     for r in rules:
         assert isinstance(r["consequents"], list)
 
-def test_rules_output_is_json_serialisable():
-    rules = mine_association_rules(REPO_PATH)
+def test_rules_output_is_json_serialisable(valid_repo):
+    rules = mine_association_rules(str(valid_repo))
     parsed = json.loads(json.dumps(rules))
     assert isinstance(parsed, list)

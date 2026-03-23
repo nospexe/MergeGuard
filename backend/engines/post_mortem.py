@@ -47,7 +47,7 @@ def build_transaction_table(commits: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def mine_association_rules(repo_path: str, min_support=0.05, min_confidence=0.5):
+def mine_association_rules(repo_path: str, min_support=0.03, min_confidence=0.5):
     commits = mine_commits(repo_path)
     df = build_transaction_table(commits)
 
