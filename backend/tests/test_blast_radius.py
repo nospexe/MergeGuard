@@ -538,8 +538,8 @@ class TestRiskScorer:
         scorer = RiskScorer()
         edges = [{"from": "api.routes", "to": "base", "depth": 1}]
 
-        score_normal, _ = scorer.score(["api.routes"], [], edges, [])
-        score_core, _ = scorer.score(["auth.routes"], [], edges, [])
+        score_normal, _ = scorer.score([], ["api.routes"], edges, [])
+        score_core, _ = scorer.score([], ["auth.routes"], edges, [])
 
         assert score_core > score_normal
 
