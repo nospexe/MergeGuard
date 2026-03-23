@@ -1,14 +1,8 @@
-"""
-test_post_mortem.py — Test Runner for Armaan's PostMortem Engine
-================================================================
-Run with: py -m python tests/test_post_mortem.py
-"""
-
 import sys
 import json
-import traceback
 from pathlib import Path
 
+# Add parent directory to sys.path so 'engines' can be imported
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from engines.post_mortem import (
@@ -18,114 +12,58 @@ from engines.post_mortem import (
     mine_association_rules,
 )
 
-# ─────────────────────────────────────────────
-# Tiny test framework
-# ─────────────────────────────────────────────
-
-passed = []
-failed = []
-
-def test(name):
-    def decorator(fn):
-        try:
-            fn()
-            passed.append(name)
-            print(f"  ✅  {name}")
-        except Exception as e:
-            failed.append((name, e))
-            print(f"  ❌  {name}")
-            tb = traceback.extract_tb(sys.exc_info()[2])
-            for frame in tb:
-                if "test_post_mortem.py" in frame.filename:
-                    print(f"       → line {frame.lineno}: {frame.line}")
-                    print(f"       → {type(e).__name__}: {e}")
-                    break
-    return decorator
+REPO_PATH = str(Path(__file__).parent.parent.parent)
 
 
-# ─────────────────────────────────────────────
-# SECTION 1: classify_commit
-# ─────────────────────────────────────────────
-
-print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print(" CLASSIFY COMMIT TESTS")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-@test("fix keyword returns bug-fix")
-def _():
+def test_fix_keyword_returns_bug_fix():
     assert classify_commit("fix login error") == "bug-fix"
 
-@test("bug keyword returns bug-fix")
-def _():
+def test_bug_keyword_returns_bug_fix():
     assert classify_commit("bug in payment flow") == "bug-fix"
 
-@test("patch keyword returns bug-fix")
-def _():
+def test_patch_keyword_returns_bug_fix():
     assert classify_commit("patch security issue") == "bug-fix"
 
-@test("error keyword returns bug-fix")
-def _():
+def test_error_keyword_returns_bug_fix():
     assert classify_commit("error handling added") == "bug-fix"
 
-@test("issue keyword returns bug-fix")
-def _():
+def test_issue_keyword_returns_bug_fix():
     assert classify_commit("issue with auth resolved") == "bug-fix"
 
-@test("refactor keyword returns refactor")
-def _():
+def test_refactor_keyword_returns_refactor():
     assert classify_commit("refactor auth module") == "refactor"
 
-@test("cleanup keyword returns refactor")
-def _():
+def test_cleanup_keyword_returns_refactor():
     assert classify_commit("cleanup old code") == "refactor"
 
-@test("rename keyword returns refactor")
-def _():
+def test_rename_keyword_returns_refactor():
     assert classify_commit("rename user model") == "refactor"
 
-@test("move keyword returns refactor")
-def _():
+def test_move_keyword_returns_refactor():
     assert classify_commit("move utils to helpers") == "refactor"
 
-@test("unrecognised message returns feature")
-def _():
+def test_unrecognised_message_returns_feature():
     assert classify_commit("add new dashboard") == "feature"
 
-@test("empty message returns feature")
-def _():
+def test_empty_message_returns_feature():
     assert classify_commit("") == "feature"
 
-@test("uppercase message is handled correctly")
-def _():
+def test_uppercase_message_is_handled_correctly():
     assert classify_commit("FIX crash on startup") == "bug-fix"
 
-@test("mixed case message is handled correctly")
-def _():
+def test_mixed_case_message_is_handled_correctly():
     assert classify_commit("Refactor Login Flow") == "refactor"
 
 
-# ─────────────────────────────────────────────
-# SECTION 2: mine_commits
-# ─────────────────────────────────────────────
-
-print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print(" MINE COMMITS TESTS")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-REPO_PATH = str(Path(__file__).parent.parent.parent)
-
-@test("mine_commits returns a list")
-def _():
+def test_mine_commits_returns_a_list():
     commits = mine_commits(REPO_PATH)
     assert isinstance(commits, list)
 
-@test("mine_commits returns at least 1 commit")
-def _():
+def test_mine_commits_returns_at_least_1_commit():
     commits = mine_commits(REPO_PATH)
     assert len(commits) >= 1
 
-@test("each commit has required keys")
-def _():
+def test_each_commit_has_required_keys():
     commits = mine_commits(REPO_PATH)
     for c in commits:
         assert "sha" in c
@@ -134,92 +72,64 @@ def _():
         assert "files" in c
         assert "date" in c
 
-@test("sha is 8 characters long")
-def _():
+def test_sha_is_8_characters_long():
     commits = mine_commits(REPO_PATH)
     for c in commits:
         assert len(c["sha"]) == 8
 
-@test("type is always bug-fix, refactor or feature")
-def _():
+def test_type_is_always_bug_fix_refactor_or_feature():
     commits = mine_commits(REPO_PATH)
     for c in commits:
         assert c["type"] in ["bug-fix", "refactor", "feature"]
 
-@test("files is always a list")
-def _():
+def test_files_is_always_a_list():
     commits = mine_commits(REPO_PATH)
     for c in commits:
         assert isinstance(c["files"], list)
 
-@test("date is a non-empty string")
-def _():
+def test_date_is_a_non_empty_string():
     commits = mine_commits(REPO_PATH)
     for c in commits:
         assert isinstance(c["date"], str)
         assert len(c["date"]) > 0
 
-@test("mine_commits output is JSON serialisable")
-def _():
+def test_mine_commits_output_is_json_serialisable():
     commits = mine_commits(REPO_PATH)
     parsed = json.loads(json.dumps(commits))
     assert isinstance(parsed, list)
 
 
-# ─────────────────────────────────────────────
-# SECTION 3: build_transaction_table
-# ─────────────────────────────────────────────
-
-print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print(" TRANSACTION TABLE TESTS")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-@test("table has same number of rows as commits")
-def _():
+def test_table_has_same_number_of_rows_as_commits():
     commits = mine_commits(REPO_PATH)
     df = build_transaction_table(commits)
     assert len(df) == len(commits)
 
-@test("table columns are all file names")
-def _():
+def test_table_columns_are_all_file_names():
     commits = mine_commits(REPO_PATH)
     df = build_transaction_table(commits)
     assert len(df.columns) > 0
 
-@test("table values are all boolean")
-def _():
+def test_table_values_are_all_boolean():
     commits = mine_commits(REPO_PATH)
     df = build_transaction_table(commits)
     for col in df.columns:
         assert df[col].dtype == bool
 
-@test("empty commits returns empty table")
-def _():
+def test_empty_commits_returns_empty_table():
     df = build_transaction_table([])
     assert len(df) == 0
 
-@test("commit with no files produces all False row")
-def _():
+def test_commit_with_no_files_produces_all_false_row():
     commits = [{"sha": "abc12345", "message": "test", "type": "feature", "files": [], "date": "2026-03-01"}]
     df = build_transaction_table(commits)
     assert len(df) == 1
 
 
-# ─────────────────────────────────────────────
-# SECTION 4: mine_association_rules
-# ─────────────────────────────────────────────
-
-print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print(" ASSOCIATION RULES TESTS")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-@test("mine_association_rules returns a list")
-def _():
+def test_mine_association_rules_returns_a_list():
     rules = mine_association_rules(REPO_PATH)
     assert isinstance(rules, list)
 
-@test("each rule has required keys")
-def _():
+def test_rule_each_has_required_keys():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert "antecedents" in r
@@ -228,58 +138,32 @@ def _():
         assert "confidence" in r
         assert "lift" in r
 
-@test("confidence is always between 0 and 1")
-def _():
+def test_confidence_is_always_between_0_and_1():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert 0 <= r["confidence"] <= 1
 
-@test("support is always between 0 and 1")
-def _():
+def test_support_is_always_between_0_and_1():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert 0 <= r["support"] <= 1
 
-@test("lift is always positive")
-def _():
+def test_lift_is_always_positive():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert r["lift"] > 0
 
-@test("antecedents is always a list")
-def _():
+def test_antecedents_is_always_a_list():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert isinstance(r["antecedents"], list)
 
-@test("consequents is always a list")
-def _():
+def test_consequents_is_always_a_list():
     rules = mine_association_rules(REPO_PATH)
     for r in rules:
         assert isinstance(r["consequents"], list)
 
-@test("rules output is JSON serialisable")
-def _():
+def test_rules_output_is_json_serialisable():
     rules = mine_association_rules(REPO_PATH)
     parsed = json.loads(json.dumps(rules))
     assert isinstance(parsed, list)
-
-
-# ─────────────────────────────────────────────
-# RESULTS
-# ─────────────────────────────────────────────
-
-total = len(passed) + len(failed)
-print(f"\n{'━'*42}")
-print(f" RESULTS: {len(passed)}/{total} passed")
-print(f"{'━'*42}")
-
-if failed:
-    print(f"\n  {len(failed)} test(s) FAILED:\n")
-    for name, err in failed:
-        print(f"  ✗ {name}")
-        print(f"    {type(err).__name__}: {err}\n")
-    sys.exit(1)
-else:
-    print("\n  All tests passed. Weeks 1 & 2 are working. ✓\n")
-    sys.exit(0)
