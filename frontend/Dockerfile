@@ -1,14 +1,12 @@
-FROM python:3.12-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies first (layer-cached unless requirements.txt changes)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY package*.json .
+RUN npm install
 
-# Copy source
 COPY . .
 
-EXPOSE 8000
+EXPOSE 5173
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
