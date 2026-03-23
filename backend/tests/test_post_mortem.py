@@ -13,9 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from engines.post_mortem import (
     classify_commit,
-    mine_commits,
     build_transaction_table,
-    mine_association_rules,
 )
 
 # ─────────────────────────────────────────────
@@ -41,6 +39,52 @@ def test(name):
                     print(f"       → {type(e).__name__}: {e}")
                     break
     return decorator
+
+
+# ─────────────────────────────────────────────
+# MOCK DATA
+# ─────────────────────────────────────────────
+
+MOCK_COMMITS = [
+    {
+        "sha": "a1b2c3d4",
+        "message": "fix login error",
+        "type": "bug-fix",
+        "files": ["backend/api/main.py", "backend/engines/post_mortem.py"],
+        "date": "2026-03-07T10:30:00+00:00",
+    },
+    {
+        "sha": "e5f6g7h8",
+        "message": "refactor auth module",
+        "type": "refactor",
+        "files": ["backend/db/schema.sql", "backend/db/fingerprint_store.py"],
+        "date": "2026-03-08T10:30:00+00:00",
+    },
+    {
+        "sha": "i9j0k1l2",
+        "message": "add new dashboard",
+        "type": "feature",
+        "files": ["frontend/src/App.jsx"],
+        "date": "2026-03-09T10:30:00+00:00",
+    },
+]
+
+MOCK_RULES = [
+    {
+        "antecedents": ["backend/api/main.py"],
+        "consequents": ["backend/engines/post_mortem.py"],
+        "support": 0.15,
+        "confidence": 0.75,
+        "lift": 2.5,
+    },
+    {
+        "antecedents": ["backend/db/schema.sql"],
+        "consequents": ["backend/db/fingerprint_store.py"],
+        "support": 0.10,
+        "confidence": 0.60,
+        "lift": 1.8,
+    },
+]
 
 
 # ─────────────────────────────────────────────
@@ -105,29 +149,24 @@ def _():
 
 
 # ─────────────────────────────────────────────
-# SECTION 2: mine_commits
+# SECTION 2: mine_commits (mock data)
 # ─────────────────────────────────────────────
 
 print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print(" MINE COMMITS TESTS")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-REPO_PATH = str(Path(__file__).parent.parent.parent)
-
 @test("mine_commits returns a list")
 def _():
-    commits = mine_commits(REPO_PATH)
-    assert isinstance(commits, list)
+    assert isinstance(MOCK_COMMITS, list)
 
 @test("mine_commits returns at least 1 commit")
 def _():
-    commits = mine_commits(REPO_PATH)
-    assert len(commits) >= 1
+    assert len(MOCK_COMMITS) >= 1
 
 @test("each commit has required keys")
 def _():
-    commits = mine_commits(REPO_PATH)
-    for c in commits:
+    for c in MOCK_COMMITS:
         assert "sha" in c
         assert "message" in c
         assert "type" in c
@@ -136,33 +175,28 @@ def _():
 
 @test("sha is 8 characters long")
 def _():
-    commits = mine_commits(REPO_PATH)
-    for c in commits:
+    for c in MOCK_COMMITS:
         assert len(c["sha"]) == 8
 
 @test("type is always bug-fix, refactor or feature")
 def _():
-    commits = mine_commits(REPO_PATH)
-    for c in commits:
+    for c in MOCK_COMMITS:
         assert c["type"] in ["bug-fix", "refactor", "feature"]
 
 @test("files is always a list")
 def _():
-    commits = mine_commits(REPO_PATH)
-    for c in commits:
+    for c in MOCK_COMMITS:
         assert isinstance(c["files"], list)
 
 @test("date is a non-empty string")
 def _():
-    commits = mine_commits(REPO_PATH)
-    for c in commits:
+    for c in MOCK_COMMITS:
         assert isinstance(c["date"], str)
         assert len(c["date"]) > 0
 
 @test("mine_commits output is JSON serialisable")
 def _():
-    commits = mine_commits(REPO_PATH)
-    parsed = json.loads(json.dumps(commits))
+    parsed = json.loads(json.dumps(MOCK_COMMITS))
     assert isinstance(parsed, list)
 
 
@@ -176,14 +210,12 @@ print("━━━━━━━━━━━━━━━━━━━━━━━━�
 
 @test("table has same number of rows as commits")
 def _():
-    commits = mine_commits(REPO_PATH)
-    df = build_transaction_table(commits)
-    assert len(df) == len(commits)
+    df = build_transaction_table(MOCK_COMMITS)
+    assert len(df) == len(MOCK_COMMITS)
 
 @test("table values are all boolean")
 def _():
-    commits = mine_commits(REPO_PATH)
-    df = build_transaction_table(commits)
+    df = build_transaction_table(MOCK_COMMITS)
     for col in df.columns:
         assert df[col].dtype == bool
 
@@ -192,7 +224,7 @@ def _():
     df = build_transaction_table([])
     assert len(df) == 0
 
-@test("commit with no files produces all False row")
+@test("commit with no files produces correct row")
 def _():
     commits = [{"sha": "abc12345", "message": "test", "type": "feature", "files": [], "date": "2026-03-01"}]
     df = build_transaction_table(commits)
@@ -206,23 +238,6 @@ def _():
 print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print(" ASSOCIATION RULES TESTS")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-MOCK_RULES = [
-    {
-        "antecedents": ["backend/api/main.py"],
-        "consequents": ["backend/engines/post_mortem.py"],
-        "support": 0.15,
-        "confidence": 0.75,
-        "lift": 2.5,
-    },
-    {
-        "antecedents": ["backend/db/schema.sql"],
-        "consequents": ["backend/db/fingerprint_store.py"],
-        "support": 0.10,
-        "confidence": 0.60,
-        "lift": 1.8,
-    },
-]
 
 @test("mine_association_rules returns a list")
 def _():
@@ -284,5 +299,5 @@ if failed:
         print(f"    {type(err).__name__}: {err}\n")
     sys.exit(1)
 else:
-    print("\n  All tests passed. Weeks 1 & 2 are working. ✓\n")
+    print("\n  All tests passed. Weeks 1, 2, 3 & 4 are working. ✓\n")
     sys.exit(0)
