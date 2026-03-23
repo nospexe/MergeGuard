@@ -19,7 +19,7 @@ def mine_commits(repo_path: str) -> list[dict]:
     repo = git.Repo(repo_path)
     commits = []
 
-    for commit in repo.iter_commits("HEAD", max_count=500):
+    for commit in repo.iter_commits("HEAD", max_count=200):
         changed_files = list(commit.stats.files.keys())
         commits.append({
             "sha": commit.hexsha[:8],
@@ -47,7 +47,7 @@ def build_transaction_table(commits: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def mine_association_rules(repo_path: str, min_support=0.02, min_confidence=0.5):
+def mine_association_rules(repo_path: str, min_support=0.05, min_confidence=0.5):
     commits = mine_commits(repo_path)
     df = build_transaction_table(commits)
 
