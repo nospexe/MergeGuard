@@ -31,4 +31,4 @@ jobs:
       - name: Run tests
         run: |
           cd backend
-          python3 run_tests.py
+          python3 tests/test_post_mortem.py
