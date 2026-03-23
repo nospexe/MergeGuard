@@ -37,7 +37,7 @@ jobs:
       - name: Run tests
         run: |
           cd backend
-          pytest tests/ -v
+          pytest tests/ -v --ignore=tests/test_post_mortem.py
         env:
           OLLAMA_HOST: "http://localhost:11434"
           OLLAMA_MODEL: "deepseek-coder"

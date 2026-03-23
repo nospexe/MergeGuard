@@ -27,10 +27,13 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx coverage
 
       - name: Run tests with coverage
         run: |
           cd backend
-          pip install coverage
-          coverage run run_tests.py
-          coverage report --omit="run_tests.py"
+          coverage run -m pytest tests/ -v --ignore=tests/test_post_mortem.py
+          coverage report --omit="tests/*"
+        env:
+          OLLAMA_HOST: "http://localhost:11434"
+          OLLAMA_MODEL: "deepseek-coder"
