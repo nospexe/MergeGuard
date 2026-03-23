@@ -1,5 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
 
 def test_health_returns_ok(client):
     response = client.get("/health")

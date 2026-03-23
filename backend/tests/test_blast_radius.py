@@ -31,7 +31,6 @@ HOW TO RUN
 import textwrap
 from pathlib import Path
 
-import pytest
 
 from engines.blast_radius import (
     ASTParser,
@@ -618,7 +617,6 @@ class TestAnalyzeBlastRadius:
         The API layer depends on this.
         """
         import json
-        from dataclasses import asdict
         from engines.blast_radius import result_to_json
 
         write_file(tmp_path, "simple.py", "def foo(): pass")
