@@ -1,7 +1,5 @@
-import pytest
 import sys
+import pytest
 
 if __name__ == "__main__":
-    # Run pytest and exit with its return code
-    # This ensures CI fails if tests fail
-    sys.exit(pytest.main(["-v"]))
+    sys.exit(pytest.main(["-v", "tests/"]))
