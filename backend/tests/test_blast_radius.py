@@ -530,18 +530,18 @@ class TestRiskScorer:
 
         assert score_with_uncovered > score_no_uncovered
 
-    def test_core_module_increases_score(self):
-        """
-        Modules with "auth" or "db" in their path should incur the
-        core_penalty (weight 0.10), increasing the score.
-        """
-        scorer = RiskScorer()
-        edges = [{"from": "api.routes", "to": "base", "depth": 1}]
+def test_core_module_increases_score(self):
+    """
+    Modules with "auth" or "db" in their path should incur the
+    core_penalty (weight 0.10), increasing the score.
+    """
+    scorer = RiskScorer()
+    edges = [{"from": "utils.helpers", "to": "base", "depth": 1}]
 
-        score_normal, _ = scorer.score([], ["api.routes"], edges, [])
-        score_core, _ = scorer.score([], ["auth.routes"], edges, [])
+    score_normal, _ = scorer.score([], ["utils.helpers"], edges, [])
+    score_core, _ = scorer.score([], ["auth.routes"], edges, [])
 
-        assert score_core > score_normal
+    assert score_core > score_normal
 
     def test_score_does_not_exceed_one(self):
         """
