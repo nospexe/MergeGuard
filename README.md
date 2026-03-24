@@ -361,13 +361,13 @@ MergeGuard/
 - FastAPI backend with SSE streaming
 - REST API endpoints
 
-### 🚧 Week 3 — PostMortem + LLM (In Progress)
+### ✅  Week 3 — PostMortem + LLM 
 - Apriori association rule mining
 - Fingerprint library persistence (SQLite)
 - LangGraph multi-agent pipeline
 - Ollama integration
 
-### 📅 Week 4 — Polish + Demo Prep
+### ✅ Week 4 — Polish + Demo Prep
 - Docker Compose one-command deployment
 - Merge badge (GREEN/YELLOW/RED)
 - Demo scenarios with pre-tested repos
