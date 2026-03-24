@@ -457,5 +457,3 @@ Special thanks to:
 - **Email:** team@kernl.dev
 
 ---
-
-**MergeGuard v0.1.0** — *Know what breaks. Know why it has broken before. Before you merge.*
