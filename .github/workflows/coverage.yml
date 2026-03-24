@@ -32,7 +32,6 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          cd backend
           pip install coverage
-          coverage run run_tests.py
-          coverage report --omit="run_tests.py"
+          python3 -m coverage run -m pytest backend/tests/
+          python3 -m coverage report
