@@ -410,7 +410,7 @@ MergeGuard/
 
 **Team kernl** — FOSS Hack 2026
 
-- **Navin** (@nospexe) — BlastRadius + CoverageOverlay engines
+- **Navin** — BlastRadius + CoverageOverlay engines
 - **Armaan** — PostMortem engine (Apriori mining)
 - **Aayush** — LLM/API layer
 - **Balaa** — Frontend (React components)
