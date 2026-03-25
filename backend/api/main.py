@@ -1,4 +1,3 @@
-import json
 import os
 from dataclasses import asdict
 
@@ -257,7 +256,7 @@ async def analyze_stream(req: AnalyzeRequest):
             min_support=0.02,
             min_confidence=0.5
         )
-    except Exception as e:
+    except Exception:
         postmortem_data = []
 
     from agents.langgraph_pipeline import run_pipeline_stream
@@ -295,7 +294,7 @@ def get_recommendation(req: AnalyzeRequest):
             min_support=0.02,
             min_confidence=0.5
         )
-    except Exception as e:
+    except Exception:
         postmortem_data = []
 
     from agents.langgraph_pipeline import run_pipeline

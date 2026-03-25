@@ -395,7 +395,7 @@ async def run_pipeline_stream(
     except Exception as exc:
         structural_risk = f"Blast analysis unavailable: {exc}"
 
-    yield f"data: [Agent 1 complete]\n\n"
+    yield "data: [Agent 1 complete]\n\n"
 
     # --- Agent 2: Pattern Explainer (synchronous) ---
     yield "data: [Agent 2] Analysing historical patterns...\n\n"
@@ -436,7 +436,7 @@ async def run_pipeline_stream(
 
     except Exception as exc:
         logger.warning("Agent 3 streaming failed: %s", exc)
-        yield f"data: VERDICT: YELLOW\n\n"
+        yield "data: VERDICT: YELLOW\n\n"
         yield f"data: SUMMARY: LLM unavailable — {exc}. Manual review recommended.\n\n"
 
     yield "data: [DONE]\n\n"
