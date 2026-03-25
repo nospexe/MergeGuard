@@ -31,7 +31,6 @@ HOW TO RUN
 import textwrap
 from pathlib import Path
 
-import pytest
 
 from engines.blast_radius import (
     ASTParser,
@@ -289,7 +288,6 @@ class TestRepositoryScanner:
         scanner = RepositoryScanner(tmp_path)
         tables = scanner.scan()
 
-        # No key should contain "venv"
         for key in tables:
             assert "venv" not in key
 
@@ -466,7 +464,6 @@ class TestCallGraphTracer:
             "a": self._make_defn_table("a", "func"),
             "b": self._make_table("b", [("a", "func")]),
         }
-        # Add a circular import (b → a would loop back)
         tables["a"].imports.append(
             __import__("engines.blast_radius", fromlist=["ImportedName"]).ImportedName(
                 source_module="b",
@@ -476,9 +473,7 @@ class TestCallGraphTracer:
         )
 
         tracer = CallGraphTracer(tables)
-        # Should complete without hanging
         direct, transitive, edges, _ = tracer.trace(["a.func"], max_depth=5)
-        # Just verify it returned
         assert isinstance(direct, list)
 
 
@@ -502,8 +497,6 @@ class TestRiskScorer:
         We test just above and below each threshold.
         """
         scorer = RiskScorer()
-        # We can't control the formula's exact output easily, but we can
-        # verify that scores map to the right tiers.
         for raw, expected_tier in [
             (0.00, "LOW"),
             (0.24, "LOW"),
@@ -537,10 +530,10 @@ class TestRiskScorer:
         core_penalty (weight 0.10), increasing the score.
         """
         scorer = RiskScorer()
-        edges = [{"from": "api.routes", "to": "base", "depth": 1}]
+        edges = [{"from": "utils.helpers", "to": "base", "depth": 1}]
 
-        score_normal, _ = scorer.score(["api.routes"], [], edges, [])
-        score_core, _ = scorer.score(["auth.routes"], [], edges, [])
+        score_normal, _ = scorer.score([], ["utils.helpers"], edges, [])
+        score_core, _ = scorer.score([], ["auth.routes"], edges, [])
 
         assert score_core > score_normal
 
@@ -618,7 +611,6 @@ class TestAnalyzeBlastRadius:
         The API layer depends on this.
         """
         import json
-        from dataclasses import asdict
         from engines.blast_radius import result_to_json
 
         write_file(tmp_path, "simple.py", "def foo(): pass")

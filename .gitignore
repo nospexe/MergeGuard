@@ -33,3 +33,82 @@ htmlcov/
 
 # mypy
 .mypy_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Coverage
+.coverage
+htmlcov/
+
+# Database files
+*.db
+*.sqlite3
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Pytest cache
+.pytest_cache/
+
+# Rope project files
+.ropeproject/
+node_modules/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+.coverage
+*.egg-info/
+dist/
+build/
+.env
+# Bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
