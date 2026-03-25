@@ -576,7 +576,7 @@ class RiskScorer:
         depth_score = min(max_depth / self.DEPTH_SATURATION, 1.0)
         coverage_gap = len(uncovered_nodes) / total if total > 0 else 0.0
         core_penalty = 1.0 if any(
-            seg in mod for mod in all_affected for seg in self.CORE_PATH_SEGMENTS
+            seg in mod.split(".") for mod in all_affected for seg in self.CORE_PATH_SEGMENTS
         ) else 0.0
 
         raw = (
