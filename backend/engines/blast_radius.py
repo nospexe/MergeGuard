@@ -550,7 +550,7 @@ class RiskScorer:
     0.75 – 1.00 → CRITICAL
     """
 
-    CORE_PATH_SEGMENTS = frozenset({"auth", "db", "api", "middleware", "security", "core"})
+    CORE_PATH_SEGMENTS = frozenset({"auth", "db", "middleware", "security", "core"})
     BREADTH_SATURATION = 50   # 50+ affected files = maximum breadth score
     DEPTH_SATURATION = 8      # 8+ hops = maximum depth score
 

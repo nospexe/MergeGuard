@@ -1,8 +1,189 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BlastRadiusGraph from './components/BlastRadiusGraph';
-import { blastRadiusData, mergeBadgeData } from './data/mockData';
+import PostMortemTimeline from './components/PostMortemTimeline';
+import LLMPanel from './components/LLMPanel';
+
+// Default values for the demo
+const DEFAULT_REPO = "c:/Users/gurut/MergeGuard-1";
+const DEFAULT_PR = "dev/balaa-frontend";
 
 export default function App() {
+  const [repoPath, setRepoPath] = useState(DEFAULT_REPO);
+  const [prBranch, setPrBranch] = useState(DEFAULT_PR);
+  const [baseBranch, setBaseBranch] = useState("main");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [blastData, setBlastData] = useState(null);
+  const [postMortem, setPostMortem] = useState(null);
+  const [llmAnalysis, setLlmAnalysis] = useState(null);
+  const [badgeData, setBadgeData] = useState({
+    prTitle: "Scanning Repository...",
+    prNumber: "000",
+    author: "system",
+    timestamp: new Date().toISOString(),
+    summary: null
+  });
+
+  const runAnalysis = async () => {
+    setIsLoading(true);
+    setError(null);
+    setLlmAnalysis(null); // Reset LLM output
+
+    const reqBody = {
+      repo_path: repoPath,
+      base_branch: baseBranch,
+      pr_branch: prBranch
+    };
+
+    try {
+      // 1. Parallel fetch for structured data
+      const [blastRes, pmRes, recRes] = await Promise.all([
+        fetch('/api/blast-radius', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        }),
+        fetch('/api/postmortem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        }),
+        fetch('/api/recommendation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        })
+      ]);
+
+      if (!blastRes.ok || !pmRes.ok || !recRes.ok) {
+        throw new Error("One or more analysis engines failed.");
+      }
+
+      const bData = await blastRes.json();
+      const pData = await pmRes.json();
+      const rData = await recRes.json();
+
+      setBlastData(bData);
+      setPostMortem(pData);
+      
+      // Update badge/header info
+      setBadgeData(prev => ({
+        ...prev,
+        prTitle: `PR Analysis: ${prBranch}`,
+        summary: {
+          filesAffected: bData.nodes.filter(n => n.ring === 0).length,
+          dependencyRings: Math.max(...bData.nodes.map(n => n.ring), 0),
+          fingerprintsMatched: pData.matches.length,
+          avgCoverage: bData.overall_coverage / 100.0,
+          criticalPaths: bData.edges.length
+        }
+      }));
+
+      // Initial LLM state (non-streaming recommendation)
+      setLlmAnalysis({
+        status: rData.verdict,
+        badge: rData.verdict,
+        riskScore: bData.risk_score.toFixed(1),
+        agents: {
+          orchestrator: {
+            name: "Final Verdict",
+            status: "complete",
+            output: rData.summary
+          }
+        }
+      });
+
+      // 2. Start Streaming for detailed Analysis
+      streamLlmAnalysis(reqBody);
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const streamLlmAnalysis = async (reqBody) => {
+    try {
+      const response = await fetch('/api/analyze/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqBody)
+      });
+
+      if (!response.ok) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamedContent = "";
+
+      // Initialize the streaming agent in state
+      setLlmAnalysis(prev => ({
+        ...prev,
+        agents: {
+          ...prev.agents,
+          deepseek: {
+            name: "DeepSeek Architect",
+            status: "streaming",
+            output: ""
+          }
+        }
+      }));
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const token = line.slice(6);
+            if (token === '[DONE]') {
+              setLlmAnalysis(prev => ({
+                ...prev,
+                agents: {
+                  ...prev.agents,
+                  deepseek: { ...prev.agents.deepseek, status: "complete" }
+                }
+              }));
+              break;
+            }
+            if (token.startsWith('[ERROR]')) {
+              setLlmAnalysis(prev => ({
+                ...prev,
+                agents: {
+                  ...prev.agents,
+                  deepseek: { ...prev.agents.deepseek, status: "complete", output: token }
+                }
+              }));
+              break;
+            }
+
+            streamedContent += token;
+            setLlmAnalysis(prev => ({
+              ...prev,
+              agents: {
+                ...prev.agents,
+                deepseek: { ...prev.agents.deepseek, output: streamedContent }
+              }
+            }));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Streaming error:", e);
+    }
+  };
+
+  // Run on mount
+  useEffect(() => {
+    runAnalysis();
+  }, []);
+
   return (
     <div className="app-container">
       {/* ═══ Header ═══ */}
@@ -17,24 +198,98 @@ export default function App() {
 
         <div className="app-header__meta">
           <div className="app-header__pr-info">
-            <div className="app-header__pr-title">{mergeBadgeData.prTitle}</div>
+            <div className="app-header__pr-title">{badgeData.prTitle}</div>
             <div className="app-header__pr-number">
-              #{mergeBadgeData.prNumber} · {mergeBadgeData.author} · {new Date(mergeBadgeData.timestamp).toLocaleDateString()}
+              #{badgeData.prNumber} · {badgeData.author} · {new Date(badgeData.timestamp).toLocaleDateString()}
             </div>
           </div>
         </div>
       </header>
 
+      {/* ═══ Analysis Form ═══ */}
+      <div className="app-form animate-in" style={{ animationDelay: '0.1s' }}>
+        <div className="form-group">
+          <label>Repository Path</label>
+          <input 
+            className="app-input" 
+            value={repoPath} 
+            onChange={(e) => setRepoPath(e.target.value)}
+            placeholder="C:/path/to/repo"
+          />
+        </div>
+        <div className="form-group">
+          <label>PR Branch</label>
+          <input 
+            className="app-input" 
+            value={prBranch} 
+            onChange={(e) => setPrBranch(e.target.value)}
+            placeholder="feature/branch"
+          />
+        </div>
+        <button 
+          className="app-btn" 
+          onClick={runAnalysis} 
+          disabled={isLoading}
+        >
+          {isLoading ? 'Analyzing...' : 'Run Intelligence'}
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--badge-red-bg)', color: 'var(--badge-red)', border: '1px solid var(--badge-red)' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+
       {/* ═══ 3-Panel Grid ═══ */}
       <main className="panels-grid">
-        {/* Panel 1 — Blast Radius (full width) */}
-        <BlastRadiusGraph data={blastRadiusData} />
+        {/* Panel 1 — Blast Radius */}
+        <div className="panel blast-radius">
+          {!blastData && isLoading ? (
+             <div className="panel__content" style={{ padding: 20 }}>
+               <div className="skeleton-loader" style={{ height: '400px', width: '100%' }}></div>
+             </div>
+          ) : blastData ? (
+             <BlastRadiusGraph data={blastData} />
+          ) : (
+            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+              Awaiting data...
+            </div>
+          )}
+        </div>
 
-        {/* Panel 2 — Post Mortem Timeline (Week 3) */}
-        {/* TODO: PostMortemTimeline component */}
+        {/* Panel 2 — Post Mortem Timeline */}
+        <div className="panel postmortem">
+          {!postMortem && isLoading ? (
+            <div className="panel__content" style={{ padding: 20 }}>
+               <div className="skeleton-loader" style={{ height: '300px', width: '100%' }}></div>
+               <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 20 }}></div>
+               <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 10 }}></div>
+             </div>
+          ) : postMortem ? (
+            <PostMortemTimeline data={postMortem} />
+          ) : (
+            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+              Awaiting history...
+            </div>
+          )}
+        </div>
 
-        {/* Panel 3 — LLM Risk Analysis (Week 3) */}
-        {/* TODO: LLMPanel component */}
+        {/* Panel 3 — LLM Risk Analysis */}
+        <div className="panel llm-panel">
+          {!llmAnalysis && isLoading ? (
+            <div className="panel__content" style={{ padding: 20 }}>
+               <div className="skeleton-loader" style={{ height: '80px', width: '100%', borderRadius: 16 }}></div>
+               <div className="skeleton-loader" style={{ height: '150px', width: '100%', marginTop: 20 }}></div>
+             </div>
+          ) : llmAnalysis ? (
+            <LLMPanel data={llmAnalysis} badgeData={badgeData} />
+          ) : (
+            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+              Awaiting analysis...
+            </div>
+          )}
+        </div>
       </main>
 
       {/* ═══ Footer ═══ */}
