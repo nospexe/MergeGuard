@@ -1,0 +1,7 @@
+{
+  "venvPath": "C:\\Users\\gurut",
+  "venv": "anaconda3",
+  "extraPaths": [
+    "./backend"
+  ]
+}
