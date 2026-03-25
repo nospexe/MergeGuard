@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "contract_version": "1.0",
   "engine": "blast_radius",
@@ -43,3 +44,5 @@
     "CRITICAL": [0.75, 1.00]
   }
 }
+=======
+>>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
