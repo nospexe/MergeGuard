@@ -1,6 +1,5 @@
 import git
 import json
-from pathlib import Path
 from mlxtend.frequent_patterns import apriori, association_rules
 import pandas as pd
 

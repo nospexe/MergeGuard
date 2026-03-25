@@ -28,23 +28,17 @@ HOW TO RUN
 
 import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from engines.blast_radius import (
-    ASTParser,
     FileSymbolTable,
-    RepositoryScanner,
     SymbolDefinition,
 )
 from engines.coverage_overlay import (
     CoverageFileReader,
-    CoverageOverlayResult,
     LineCoverageData,
-    SymbolCoverageAnnotation,
     SymbolCoverageAnnotator,
-    build_coverage_overlay,
     overlay_to_json,
 )
 

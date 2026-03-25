@@ -1,8 +1,5 @@
-import asyncio
-import json
 import os
 from dataclasses import asdict
-from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -338,7 +335,7 @@ async def analyze_stream(req: AnalyzeRequest):
         )
         blast_data = asdict(blast_result)
     except Exception as e:
-        blast_data = {"error": str(e)}
+        blast_data = {"error": str(e), "risk_tier": "MEDIUM"}
 
     try:
         postmortem_data = mine_association_rules(
@@ -346,56 +343,19 @@ async def analyze_stream(req: AnalyzeRequest):
             min_support=0.02,
             min_confidence=0.5
         )
-    except Exception as e:
-        postmortem_data = {"error": str(e)}
+    except Exception:
+        postmortem_data = []
 
-
-    prompt = f"""You are a senior engineering lead reviewing a pull request.
-
-BLAST RADIUS ANALYSIS:
-{json.dumps(blast_data, indent=2)}
-
-HISTORICAL PATTERN ANALYSIS:
-{json.dumps(postmortem_data, indent=2)}
-
-Based on the above data:
-1. Summarise the structural risk from the blast radius in 2 sentences.
-2. Summarise the historical pattern risk in 2 sentences.
-3. Give a final verdict: exactly one of GREEN, YELLOW, or RED.
-   GREEN = safe to merge. YELLOW = review recommended. RED = do not merge.
-4. State one concrete action the developer must take.
-
-Do not invent file names or commit hashes not present in the data above.
-Keep your total response under 120 words."""
-
-    async def token_generator():
-        try:
-            import ollama
-            client = ollama.AsyncClient(host=OLLAMA_HOST)
-            async for chunk in await client.chat(
-                model=OLLAMA_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                stream=True
-            ):
-                token = chunk["message"]["content"]
-                if token:
-                    yield f"data: {token}\n\n"
-
-        except Exception as e:
-            yield f"data: [ERROR] LLM unavailable: {str(e)}\n\n"
-
-        finally:
-            yield "data: [DONE]\n\n"
+    from agents.langgraph_pipeline import run_pipeline_stream
 
     return StreamingResponse(
-        token_generator(),
+        run_pipeline_stream(blast_data, postmortem_data),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no"
         }
     )
-
 
 @app.post("/api/recommendation", response_model=RecommendationResponse)
 def get_recommendation(req: AnalyzeRequest):
@@ -413,7 +373,7 @@ def get_recommendation(req: AnalyzeRequest):
         )
         blast_data = asdict(blast_result)
     except Exception as e:
-        blast_data = {"error": str(e)}
+        blast_data = {"error": str(e), "risk_tier": "MEDIUM"}
 
     try:
         postmortem_data = mine_association_rules(
@@ -421,56 +381,18 @@ def get_recommendation(req: AnalyzeRequest):
             min_support=0.02,
             min_confidence=0.5
         )
-    except Exception as e:
-        postmortem_data = {"error": str(e)}
+    except Exception:
+        postmortem_data = []
 
-    prompt = f"""You are a senior engineering lead making a merge decision.
+    from agents.langgraph_pipeline import run_pipeline
+    result = run_pipeline(blast_data, postmortem_data)
 
-BLAST RADIUS DATA:
-{json.dumps(blast_data, indent=2)}
-
-HISTORICAL PATTERN DATA:
-{json.dumps(postmortem_data, indent=2)}
-
-Respond in this exact format and nothing else:
-VERDICT: <GREEN|YELLOW|RED>
-SUMMARY: <one paragraph, max 60 words>
-BLAST_RISK: <one sentence about structural risk>
-PATTERN_RISK: <one sentence about historical pattern risk>
-
-Do not add any text outside this format."""
-
-    try:
-        import ollama
-        client = ollama.Client(host=OLLAMA_HOST)
-        response = client.chat(
-            model=OLLAMA_MODEL,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        raw = response["message"]["content"]
-
-        lines = {
-            line.split(":")[0].strip(): ":".join(line.split(":")[1:]).strip()
-            for line in raw.strip().splitlines()
-            if ":" in line
-        }
-
-        return RecommendationResponse(
-            verdict=lines.get("VERDICT", "YELLOW"),
-            summary=lines.get("SUMMARY", raw),
-            blast_risk=lines.get("BLAST_RISK", "Unable to parse blast risk."),
-            pattern_risk=lines.get("PATTERN_RISK", "Unable to parse pattern risk.")
-        )
-
-    except Exception as e:
-        return RecommendationResponse(
-            verdict="YELLOW",
-            summary=f"LLM unavailable: {str(e)}. Manual review recommended.",
-            blast_risk="Could not compute blast risk.",
-            pattern_risk="Could not compute pattern risk."
-        )
-
-
+    return RecommendationResponse(
+        verdict=      result.verdict,
+        summary=      result.summary,
+        blast_risk=   result.blast_risk,
+        pattern_risk= result.pattern_risk,
+    )
 
 
 if __name__ == "__main__":
