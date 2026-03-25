@@ -8,6 +8,11 @@ WORKDIR /app
 COPY frontend/package.json ./
 RUN npm install
 
+EXPOSE 5173
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 # Copy source and build
 COPY frontend/ ./
 RUN npm run build
