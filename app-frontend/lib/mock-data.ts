@@ -35,24 +35,9 @@ export const riskItems: RiskItem[] = [
 ];
 
 export const metrics: MetricCardData[] = [
-    {
-        label: "Active PRs",
-        value: 42,
-        sub: "+3 since peak",
-        color: "blue",
-    },
-    {
-        label: "Critical Risks",
-        value: 7,
-        sub: "Action req.",
-        color: "red",
-    },
-    {
-        label: "Pattern Confidence",
-        value: "98.4%",
-        sub: "Ollama-v1.4",
-        color: "default",
-    },
+    { label: "Active PRs", value: 42, sub: "+3 since peak", color: "blue" },
+    { label: "Critical Risks", value: 7, sub: "Action req.", color: "red" },
+    { label: "Pattern Confidence", value: "98.4%", sub: "Ollama-v1.4", color: "default" },
 ];
 
 export const engineStatus: EngineStatus = {
@@ -68,9 +53,7 @@ export const gitMiner: GitMinerStatus = {
     statusLine: "Scanning remote refs/heads/main...",
 };
 
-export const systemPulse: number[] = [
-    40, 55, 30, 70, 45, 80, 35, 65, 50, 75, 42, 68,
-];
+export const systemPulse: number[] = [40, 55, 30, 70, 45, 80, 35, 65, 50, 75, 42, 68];
 
 export const anomaly: AnomalyData = {
     title: "Anomaly Detected",
@@ -97,9 +80,13 @@ export const featureCards: FeatureCard[] = [
         title: "PostMortem",
         description:
             "Historical failure pattern mining. Our engine learns from your previous incidents to block merges that resemble past architectural catastrophes.",
-        tags: [
-            "Pattern Matching v4.1 Active",
-            "Historical regression database synced",
-        ],
+        tags: ["Pattern Matching v4.1 Active", "Historical regression database synced"],
     },
+];
+
+export const navItems = [
+    { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
+    { label: "Blast Radius", href: "/dashboard/blast-radius", icon: "Target" },
+    { label: "PostMortem", href: "/dashboard/postmortem", icon: "Clock" },
+    { label: "Settings", href: "/dashboard/settings", icon: "Settings" },
 ];
