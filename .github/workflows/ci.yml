@@ -15,13 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -31,10 +29,10 @@ jobs:
       - name: Run ruff
         run: |
           cd backend
-          ruff check . --ignore E501,E402,F401
+          ruff check . --ignore E501,E402,F401,F811
 
   test:
-    name: Test Suite (all engines + API)
+    name: Run Tests
     runs-on: ubuntu-latest
     needs: lint
 
@@ -44,17 +42,15 @@ jobs:
       PYTHONPATH: backend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Cache pip packages
+      - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -65,72 +61,59 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx ruff
+          pip install pytest pytest-asyncio httpx
 
-      - name: Configure Git (required by conftest valid_repo fixture)
+      - name: Configure Git identity
         run: |
           git config --global user.email "ci@mergeguard.dev"
           git config --global user.name "MergeGuard CI"
 
-      - name: Run BlastRadius engine tests
+      - name: Run BlastRadius tests
         run: |
           cd backend
           pytest tests/test_blast_radius.py -v --tb=short
 
-      - name: Run CoverageOverlay engine tests
+      - name: Run CoverageOverlay tests
         run: |
           cd backend
           pytest tests/test_coverage_overlay.py -v --tb=short
 
-      - name: Run PostMortem engine tests
+      - name: Run PostMortem tests
         run: |
           cd backend
           pytest tests/test_post_mortem.py -v --tb=short
 
-      - name: Run API integration tests
+      - name: Run API tests
         run: |
           cd backend
           pytest tests/test_api.py -v --tb=short
 
-      - name: Run full test suite (aggregate)
-        run: |
-          cd backend
-          pytest tests/ -v --tb=short -q
-
-  build-check:
+  build-backend:
     name: Docker Build Check (backend)
     runs-on: ubuntu-latest
     needs: test
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build backend Docker image
-        run: |
-          docker build -f backend/Dockerfile -t mergeguard-backend:ci .
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile backend/ -t mergeguard-backend:ci
 
-  frontend-build:
+  build-frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: Install and build
         run: |
           cd frontend
           npm ci
-
-      - name: Build frontend
-        run: |
-          cd frontend
           npm run build

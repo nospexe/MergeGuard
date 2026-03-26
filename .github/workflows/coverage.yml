@@ -20,17 +20,15 @@ jobs:
       PYTHONPATH: backend
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Cache pip packages
+      - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -43,7 +41,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx coverage[toml]
 
-      - name: Configure Git (required by conftest valid_repo fixture)
+      - name: Configure Git identity
         run: |
           git config --global user.email "ci@mergeguard.dev"
           git config --global user.name "MergeGuard CI"
@@ -53,8 +51,7 @@ jobs:
           cd backend
           coverage run \
             --source=engines,agents,api,utils,db \
-            -m pytest tests/ -v \
-            --tb=short
+            -m pytest tests/ -v --tb=short
           coverage report \
             --omit="tests/*,run_tests.py" \
             --fail-under=80
@@ -62,20 +59,18 @@ jobs:
             --omit="tests/*,run_tests.py" \
             -o coverage.xml
 
-      - name: Upload coverage XML artifact
+      - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
           name: coverage-xml
           path: backend/coverage.xml
 
-      - name: Generate HTML coverage report
+      - name: Generate HTML report
         run: |
           cd backend
-          coverage html \
-            --omit="tests/*,run_tests.py" \
-            -d htmlcov
+          coverage html --omit="tests/*,run_tests.py" -d htmlcov
 
-      - name: Upload HTML coverage report artifact
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html
@@ -84,6 +79,4 @@ jobs:
       - name: Print coverage summary
         run: |
           cd backend
-          coverage report \
-            --omit="tests/*,run_tests.py" \
-            --show-missing
+          coverage report --omit="tests/*,run_tests.py" --show-missing
