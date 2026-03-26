@@ -4,13 +4,13 @@ import PostMortemTimeline from './components/PostMortemTimeline';
 import LLMPanel from './components/LLMPanel';
 
 // Default values for the demo
-const DEFAULT_REPO = "c:/Users/gurut/MergeGuard-1";
-const DEFAULT_PR = "dev/balaa-frontend";
+const DEFAULT_REPO = 'c:/Users/gurut/MergeGuard-1';
+const DEFAULT_PR = 'dev/balaa-frontend';
 
 export default function App() {
   const [repoPath, setRepoPath] = useState(DEFAULT_REPO);
   const [prBranch, setPrBranch] = useState(DEFAULT_PR);
-  const [baseBranch, setBaseBranch] = useState("main");
+  const [baseBranch, setBaseBranch] = useState('main');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,11 +19,11 @@ export default function App() {
   const [postMortem, setPostMortem] = useState(null);
   const [llmAnalysis, setLlmAnalysis] = useState(null);
   const [badgeData, setBadgeData] = useState({
-    prTitle: "Scanning Repository...",
-    prNumber: "000",
-    author: "system",
+    prTitle: 'Scanning Repository...',
+    prNumber: '000',
+    author: 'system',
     timestamp: new Date().toISOString(),
-    summary: null
+    summary: null,
   });
 
   const runAnalysis = async () => {
@@ -34,7 +34,7 @@ export default function App() {
     const reqBody = {
       repo_path: repoPath,
       base_branch: baseBranch,
-      pr_branch: prBranch
+      pr_branch: prBranch,
     };
 
     try {
@@ -42,22 +42,22 @@ export default function App() {
         fetch('/api/blast-radius', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reqBody)
+          body: JSON.stringify(reqBody),
         }),
         fetch('/api/postmortem', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reqBody)
+          body: JSON.stringify(reqBody),
         }),
         fetch('/api/recommendation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reqBody)
-        })
+          body: JSON.stringify(reqBody),
+        }),
       ]);
 
       if (!blastRes.ok || !pmRes.ok || !recRes.ok) {
-        throw new Error("One or more analysis engines failed.");
+        throw new Error('One or more analysis engines failed.');
       }
 
       const bData = await blastRes.json();
@@ -67,16 +67,16 @@ export default function App() {
       setBlastData(bData);
       setPostMortem(pData);
 
-      setBadgeData(prev => ({
+      setBadgeData((prev) => ({
         ...prev,
         prTitle: `PR Analysis: ${prBranch}`,
         summary: {
-          filesAffected: bData.nodes.filter(n => n.ring === 0).length,
-          dependencyRings: Math.max(...bData.nodes.map(n => n.ring), 0),
+          filesAffected: bData.nodes.filter((n) => n.ring === 0).length,
+          dependencyRings: Math.max(...bData.nodes.map((n) => n.ring), 0),
           fingerprintsMatched: pData.matches.length,
           avgCoverage: bData.overall_coverage / 100.0,
-          criticalPaths: bData.edges.length
-        }
+          criticalPaths: bData.edges.length,
+        },
       }));
 
       setLlmAnalysis({
@@ -85,15 +85,14 @@ export default function App() {
         riskScore: bData.risk_score.toFixed(1),
         agents: {
           orchestrator: {
-            name: "Final Verdict",
-            status: "complete",
-            output: rData.summary
-          }
-        }
+            name: 'Final Verdict',
+            status: 'complete',
+            output: rData.summary,
+          },
+        },
       });
 
       streamLlmAnalysis(reqBody);
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,25 +105,25 @@ export default function App() {
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reqBody)
+        body: JSON.stringify(reqBody),
       });
 
       if (!response.ok) return;
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let streamedContent = "";
+      let streamedContent = '';
 
-      setLlmAnalysis(prev => ({
+      setLlmAnalysis((prev) => ({
         ...prev,
         agents: {
           ...prev.agents,
           deepseek: {
-            name: "DeepSeek Architect",
-            status: "streaming",
-            output: ""
-          }
-        }
+            name: 'DeepSeek Architect',
+            status: 'streaming',
+            output: '',
+          },
+        },
       }));
 
       while (true) {
@@ -138,33 +137,37 @@ export default function App() {
           if (line.startsWith('data: ')) {
             const token = line.slice(6);
             if (token === '[DONE]') {
-              setLlmAnalysis(prev => ({
+              setLlmAnalysis((prev) => ({
                 ...prev,
                 agents: {
                   ...prev.agents,
-                  deepseek: { ...prev.agents.deepseek, status: "complete" }
-                }
+                  deepseek: { ...prev.agents.deepseek, status: 'complete' },
+                },
               }));
               break;
             }
             if (token.startsWith('[ERROR]')) {
-              setLlmAnalysis(prev => ({
+              setLlmAnalysis((prev) => ({
                 ...prev,
                 agents: {
                   ...prev.agents,
-                  deepseek: { ...prev.agents.deepseek, status: "complete", output: token }
-                }
+                  deepseek: {
+                    ...prev.agents.deepseek,
+                    status: 'complete',
+                    output: token,
+                  },
+                },
               }));
               break;
             }
 
             streamedContent += token;
-            setLlmAnalysis(prev => ({
+            setLlmAnalysis((prev) => ({
               ...prev,
               agents: {
                 ...prev.agents,
-                deepseek: { ...prev.agents.deepseek, output: streamedContent }
-              }
+                deepseek: { ...prev.agents.deepseek, output: streamedContent },
+              },
             }));
           }
         }
@@ -185,7 +188,9 @@ export default function App() {
       {/* ═══ Header ═══ */}
       <header className="app-header animate-fade-in" role="banner">
         <nav aria-label="Main navigation" className="app-header__brand">
-          <a href="/" aria-label="MergeGuard home" className="app-header__logo">M</a>
+          <a href="/" aria-label="MergeGuard home" className="app-header__logo">
+            M
+          </a>
           <div>
             <div className="app-header__title">MergeGuard</div>
             <div className="app-header__subtitle">Pre-Merge Intelligence</div>
@@ -196,14 +201,20 @@ export default function App() {
           <div className="app-header__pr-info">
             <div className="app-header__pr-title">{badgeData.prTitle}</div>
             <div className="app-header__pr-number">
-              #{badgeData.prNumber} · {badgeData.author} · {new Date(badgeData.timestamp).toLocaleDateString()}
+              #{badgeData.prNumber} · {badgeData.author} ·{' '}
+              {new Date(badgeData.timestamp).toLocaleDateString()}
             </div>
           </div>
         </div>
       </header>
 
       {/* ═══ Analysis Form ═══ */}
-      <div className="app-form animate-fade-in" style={{ animationDelay: '0.1s' }} role="form" aria-label="Analysis configuration">
+      <div
+        className="app-form animate-fade-in"
+        style={{ animationDelay: '0.1s' }}
+        role="form"
+        aria-label="Analysis configuration"
+      >
         <div className="form-group">
           <label htmlFor="repo-path-input">Repository Path</label>
           <input
@@ -228,7 +239,9 @@ export default function App() {
           className="app-btn"
           onClick={runAnalysis}
           disabled={isLoading}
-          aria-label={isLoading ? 'Analysis in progress' : 'Run intelligence analysis'}
+          aria-label={
+            isLoading ? 'Analysis in progress' : 'Run intelligence analysis'
+          }
           aria-busy={isLoading}
         >
           {isLoading ? 'Analyzing...' : 'Run Intelligence'}
@@ -244,7 +257,7 @@ export default function App() {
             borderRadius: '8px',
             background: 'var(--badge-red-bg)',
             color: 'var(--badge-red)',
-            border: '1px solid var(--badge-red)'
+            border: '1px solid var(--badge-red)',
           }}
         >
           <strong>Error:</strong> {error}
@@ -257,12 +270,25 @@ export default function App() {
         <div className="panel blast-radius">
           {!blastData && isLoading ? (
             <div className="panel__content" style={{ padding: 20 }}>
-              <div className="skeleton-loader" style={{ height: '400px', width: '100%' }} aria-label="Loading blast radius data" />
+              <div
+                className="skeleton-loader"
+                style={{ height: '400px', width: '100%' }}
+                aria-label="Loading blast radius data"
+              />
             </div>
           ) : blastData ? (
             <BlastRadiusGraph data={blastData} />
           ) : (
-            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+            <div
+              className="panel__content"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 400,
+                color: 'var(--text-muted)',
+              }}
+            >
               Awaiting data...
             </div>
           )}
@@ -272,14 +298,33 @@ export default function App() {
         <div className="panel postmortem">
           {!postMortem && isLoading ? (
             <div className="panel__content" style={{ padding: 20 }}>
-              <div className="skeleton-loader" style={{ height: '300px', width: '100%' }} aria-label="Loading post mortem data" />
-              <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 20 }} />
-              <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 10 }} />
+              <div
+                className="skeleton-loader"
+                style={{ height: '300px', width: '100%' }}
+                aria-label="Loading post mortem data"
+              />
+              <div
+                className="skeleton-loader"
+                style={{ height: '50px', width: '100%', marginTop: 20 }}
+              />
+              <div
+                className="skeleton-loader"
+                style={{ height: '50px', width: '100%', marginTop: 10 }}
+              />
             </div>
           ) : postMortem ? (
             <PostMortemTimeline data={postMortem} />
           ) : (
-            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+            <div
+              className="panel__content"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 400,
+                color: 'var(--text-muted)',
+              }}
+            >
               Awaiting history...
             </div>
           )}
@@ -289,13 +334,29 @@ export default function App() {
         <div className="panel llm-panel">
           {!llmAnalysis && isLoading ? (
             <div className="panel__content" style={{ padding: 20 }}>
-              <div className="skeleton-loader" style={{ height: '80px', width: '100%', borderRadius: 16 }} aria-label="Loading LLM analysis" />
-              <div className="skeleton-loader" style={{ height: '150px', width: '100%', marginTop: 20 }} />
+              <div
+                className="skeleton-loader"
+                style={{ height: '80px', width: '100%', borderRadius: 16 }}
+                aria-label="Loading LLM analysis"
+              />
+              <div
+                className="skeleton-loader"
+                style={{ height: '150px', width: '100%', marginTop: 20 }}
+              />
             </div>
           ) : llmAnalysis ? (
             <LLMPanel data={llmAnalysis} badgeData={badgeData} />
           ) : (
-            <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
+            <div
+              className="panel__content"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 400,
+                color: 'var(--text-muted)',
+              }}
+            >
               Awaiting analysis...
             </div>
           )}

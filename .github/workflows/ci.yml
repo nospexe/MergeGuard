@@ -39,7 +39,7 @@ jobs:
     env:
       OLLAMA_HOST: "http://localhost:11434"
       OLLAMA_MODEL: "deepseek-coder"
-      PYTHONPATH: backend
+      PYTHONPATH: ${{ github.workspace }}/backend
 
     steps:
       - uses: actions/checkout@v4
@@ -110,10 +110,10 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: app-frontend/package-lock.json
 
       - name: Install and build
         run: |
-          cd frontend
+          cd app-frontend
           npm ci
           npm run build

@@ -21,9 +21,21 @@ function MarkdownRenderer({ source }) {
   const flushList = () => {
     if (listItems.length > 0) {
       if (listType === 'ol') {
-        elements.push(<ol key={key++}>{listItems.map((li, idx) => <li key={idx}>{renderInline(li)}</li>)}</ol>);
+        elements.push(
+          <ol key={key++}>
+            {listItems.map((li, idx) => (
+              <li key={idx}>{renderInline(li)}</li>
+            ))}
+          </ol>
+        );
       } else {
-        elements.push(<ul key={key++}>{listItems.map((li, idx) => <li key={idx}>{renderInline(li)}</li>)}</ul>);
+        elements.push(
+          <ul key={key++}>
+            {listItems.map((li, idx) => (
+              <li key={idx}>{renderInline(li)}</li>
+            ))}
+          </ul>
+        );
       }
       listItems = [];
       listType = null;
@@ -39,7 +51,9 @@ function MarkdownRenderer({ source }) {
     let pKey = 0;
     while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIdx) {
-        parts.push(<span key={pKey++}>{text.slice(lastIdx, match.index)}</span>);
+        parts.push(
+          <span key={pKey++}>{text.slice(lastIdx, match.index)}</span>
+        );
       }
       if (match[1]) {
         parts.push(<strong key={pKey++}>{match[2]}</strong>);
@@ -103,7 +117,16 @@ function MarkdownRenderer({ source }) {
 
     if (line.match(/^---+$/)) {
       flushList();
-      elements.push(<hr key={key++} style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '12px 0' }} />);
+      elements.push(
+        <hr
+          key={key++}
+          style={{
+            border: 'none',
+            borderTop: '1px solid var(--border-subtle)',
+            margin: '12px 0',
+          }}
+        />
+      );
       i++;
       continue;
     }
@@ -125,7 +148,7 @@ export default function LLMPanel({ data, badgeData }) {
   if (!data) return null;
 
   const toggleAgent = (agentKey) => {
-    setExpandedAgents(prev => ({
+    setExpandedAgents((prev) => ({
       ...prev,
       [agentKey]: !prev[agentKey],
     }));
@@ -139,46 +162,67 @@ export default function LLMPanel({ data, badgeData }) {
 
   const badgeColor = (badge) => {
     switch (badge) {
-      case 'GREEN': return 'var(--badge-green)';
-      case 'YELLOW': return 'var(--badge-yellow)';
-      case 'RED': return 'var(--badge-red)';
-      default: return 'var(--text-muted)';
+      case 'GREEN':
+        return 'var(--badge-green)';
+      case 'YELLOW':
+        return 'var(--badge-yellow)';
+      case 'RED':
+        return 'var(--badge-red)';
+      default:
+        return 'var(--text-muted)';
     }
   };
 
   const badgeLabel = (badge) => {
     switch (badge) {
-      case 'GREEN': return 'Safe to Merge';
-      case 'YELLOW': return 'Merge with Caution';
-      case 'RED': return 'Do Not Merge';
-      default: return 'Unknown';
+      case 'GREEN':
+        return 'Safe to Merge';
+      case 'YELLOW':
+        return 'Merge with Caution';
+      case 'RED':
+        return 'Do Not Merge';
+      default:
+        return 'Unknown';
     }
   };
 
   const badgeIcon = (badge) => {
     switch (badge) {
-      case 'GREEN': return '✓';
-      case 'YELLOW': return '⚠';
-      case 'RED': return '✕';
-      default: return '?';
+      case 'GREEN':
+        return '✓';
+      case 'YELLOW':
+        return '⚠';
+      case 'RED':
+        return '✕';
+      default:
+        return '?';
     }
   };
 
   return (
-    <section className="panel llm-panel animate-scale-in animate-delay-4" aria-label="LLM risk analysis">
+    <section
+      className="panel llm-panel animate-scale-in animate-delay-4"
+      aria-label="LLM risk analysis"
+    >
       <div className="panel__header">
         <div className="panel__title">
-          <span className="panel__title-icon" aria-hidden="true">🧠</span>
+          <span className="panel__title-icon" aria-hidden="true">
+            🧠
+          </span>
           LLM Risk Analysis
         </div>
-        <span className="panel__badge" style={{
-          background: data.badge === 'GREEN'
-            ? 'var(--badge-green-bg)'
-            : data.badge === 'YELLOW'
-              ? 'var(--badge-yellow-bg)'
-              : 'var(--badge-red-bg)',
-          color: badgeColor(data.badge),
-        }}>
+        <span
+          className="panel__badge"
+          style={{
+            background:
+              data.badge === 'GREEN'
+                ? 'var(--badge-green-bg)'
+                : data.badge === 'YELLOW'
+                  ? 'var(--badge-yellow-bg)'
+                  : 'var(--badge-red-bg)',
+            color: badgeColor(data.badge),
+          }}
+        >
           {data.status}
         </span>
       </div>
@@ -199,28 +243,56 @@ export default function LLMPanel({ data, badgeData }) {
               {badgeLabel(data.badge)}
             </span>
           </div>
-          <div className="merge-badge__score" aria-label={`Risk score: ${data.riskScore}`}>
+          <div
+            className="merge-badge__score"
+            aria-label={`Risk score: ${data.riskScore}`}
+          >
             {data.riskScore}
           </div>
         </div>
 
         {/* ─── Stats Summary ─── */}
         {badgeData?.summary && (
-          <div className="stats-row" style={{ marginTop: 16, marginBottom: 16 }} role="list" aria-label="Analysis summary statistics">
+          <div
+            className="stats-row"
+            style={{ marginTop: 16, marginBottom: 16 }}
+            role="list"
+            aria-label="Analysis summary statistics"
+          >
             <div className="stat-chip" role="listitem">
-              <span aria-hidden="true">📁</span> <span className="stat-chip__value">{badgeData.summary.filesAffected}</span> files affected
+              <span aria-hidden="true">📁</span>{' '}
+              <span className="stat-chip__value">
+                {badgeData.summary.filesAffected}
+              </span>{' '}
+              files affected
             </div>
             <div className="stat-chip" role="listitem">
-              <span aria-hidden="true">🎯</span> <span className="stat-chip__value">{badgeData.summary.dependencyRings}</span> rings deep
+              <span aria-hidden="true">🎯</span>{' '}
+              <span className="stat-chip__value">
+                {badgeData.summary.dependencyRings}
+              </span>{' '}
+              rings deep
             </div>
             <div className="stat-chip" role="listitem">
-              <span aria-hidden="true">🧬</span> <span className="stat-chip__value">{badgeData.summary.fingerprintsMatched}</span> fingerprints
+              <span aria-hidden="true">🧬</span>{' '}
+              <span className="stat-chip__value">
+                {badgeData.summary.fingerprintsMatched}
+              </span>{' '}
+              fingerprints
             </div>
             <div className="stat-chip" role="listitem">
-              <span aria-hidden="true">📊</span> <span className="stat-chip__value">{Math.round(badgeData.summary.avgCoverage * 100)}%</span> avg coverage
+              <span aria-hidden="true">📊</span>{' '}
+              <span className="stat-chip__value">
+                {Math.round(badgeData.summary.avgCoverage * 100)}%
+              </span>{' '}
+              avg coverage
             </div>
             <div className="stat-chip" role="listitem">
-              <span aria-hidden="true">⚠️</span> <span className="stat-chip__value">{badgeData.summary.criticalPaths}</span> critical paths
+              <span aria-hidden="true">⚠️</span>{' '}
+              <span className="stat-chip__value">
+                {badgeData.summary.criticalPaths}
+              </span>{' '}
+              critical paths
             </div>
           </div>
         )}
@@ -253,7 +325,11 @@ export default function LLMPanel({ data, badgeData }) {
                 </div>
                 <span
                   className={`llm-agent__status llm-agent__status--${agent.status}`}
-                  aria-label={agent.status === 'complete' ? 'Status: complete' : 'Status: streaming'}
+                  aria-label={
+                    agent.status === 'complete'
+                      ? 'Status: complete'
+                      : 'Status: streaming'
+                  }
                 >
                   {agent.status === 'complete' ? '✓ complete' : '⟳ streaming'}
                 </span>

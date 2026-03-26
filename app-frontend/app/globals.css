@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Backgrounds */
+  --bg-base: #070A0F;
+  --bg-raised: #0D1117;
+  --bg-elevated: #111827;
+  --bg-high: #1A2236;
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+
+  /* Blue */
+  --blue: #3B82F6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
+  --blue-border: rgba(59, 130, 246, 0.3);
+  --blue-text: #93C5FD;
+
+  /* Purple */
+  --purple: #8B5CF6;
+
+  /* Green */
+  --green: #34D399;
+  --green-dim: rgba(52, 211, 153, 0.12);
+  --green-border: rgba(52, 211, 153, 0.25);
+
+  /* Red */
+  --red: #F87171;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --red-border: rgba(248, 113, 113, 0.25);
+
+  /* Amber */
+  --amber: #FBBF24;
+  --amber-dim: rgba(251, 191, 36, 0.12);
+  --amber-border: rgba(251, 191, 36, 0.25);
+
+  /* Text */
+  --text-1: #F8FAFC;
+  --text-2: rgba(248, 250, 252, 0.6);
+  --text-3: rgba(248, 250, 252, 0.35);
+  --text-4: rgba(248, 250, 252, 0.2);
+
+  /* Layout surfaces */
+  --topnav-bg: rgba(7, 10, 15, 0.8);
+  --sidebar-bg: rgba(255, 255, 255, 0.03);
+
+  /* Focus */
+  --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: var(--text-1);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

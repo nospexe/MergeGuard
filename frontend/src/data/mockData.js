@@ -3,121 +3,222 @@
 export const blastRadiusData = {
   nodes: [
     // Ring 0 — Changed file (centre)
-    { id: "auth/login.py",           type: "changed",   ring: 0, coverage: 0.92, lines: 148,  functions: ["authenticate", "validate_token", "refresh_session"] },
-    
+    {
+      id: 'auth/login.py',
+      type: 'changed',
+      ring: 0,
+      coverage: 0.92,
+      lines: 148,
+      functions: ['authenticate', 'validate_token', 'refresh_session'],
+    },
+
     // Ring 1 — Direct dependents
-    { id: "api/routes.py",           type: "dependent",  ring: 1, coverage: 0.85, lines: 312,  functions: ["login_route", "logout_route", "protected_route"] },
-    { id: "middleware/auth_mw.py",   type: "dependent",  ring: 1, coverage: 0.78, lines: 87,   functions: ["require_auth", "check_permissions"] },
-    { id: "services/user_svc.py",    type: "dependent",  ring: 1, coverage: 0.65, lines: 204,  functions: ["get_user", "update_profile", "delete_account"] },
-    { id: "tests/test_auth.py",      type: "test",       ring: 1, coverage: 1.0,  lines: 156,  functions: ["test_login", "test_token_refresh", "test_invalid_creds"] },
-    
+    {
+      id: 'api/routes.py',
+      type: 'dependent',
+      ring: 1,
+      coverage: 0.85,
+      lines: 312,
+      functions: ['login_route', 'logout_route', 'protected_route'],
+    },
+    {
+      id: 'middleware/auth_mw.py',
+      type: 'dependent',
+      ring: 1,
+      coverage: 0.78,
+      lines: 87,
+      functions: ['require_auth', 'check_permissions'],
+    },
+    {
+      id: 'services/user_svc.py',
+      type: 'dependent',
+      ring: 1,
+      coverage: 0.65,
+      lines: 204,
+      functions: ['get_user', 'update_profile', 'delete_account'],
+    },
+    {
+      id: 'tests/test_auth.py',
+      type: 'test',
+      ring: 1,
+      coverage: 1.0,
+      lines: 156,
+      functions: ['test_login', 'test_token_refresh', 'test_invalid_creds'],
+    },
+
     // Ring 2 — Transitive dependents
-    { id: "api/admin.py",            type: "dependent",  ring: 2, coverage: 0.42, lines: 198,  functions: ["admin_dashboard", "manage_users"] },
-    { id: "services/email_svc.py",   type: "dependent",  ring: 2, coverage: 0.31, lines: 134,  functions: ["send_welcome", "send_reset_password"] },
-    { id: "models/user.py",          type: "dependent",  ring: 2, coverage: 0.88, lines: 92,   functions: ["User", "UserSession"] },
-    { id: "utils/crypto.py",         type: "dependent",  ring: 2, coverage: 0.55, lines: 67,   functions: ["hash_password", "verify_hash", "generate_token"] },
-    { id: "workers/cleanup.py",      type: "dependent",  ring: 2, coverage: 0.12, lines: 45,   functions: ["purge_expired_sessions"] },
-    
+    {
+      id: 'api/admin.py',
+      type: 'dependent',
+      ring: 2,
+      coverage: 0.42,
+      lines: 198,
+      functions: ['admin_dashboard', 'manage_users'],
+    },
+    {
+      id: 'services/email_svc.py',
+      type: 'dependent',
+      ring: 2,
+      coverage: 0.31,
+      lines: 134,
+      functions: ['send_welcome', 'send_reset_password'],
+    },
+    {
+      id: 'models/user.py',
+      type: 'dependent',
+      ring: 2,
+      coverage: 0.88,
+      lines: 92,
+      functions: ['User', 'UserSession'],
+    },
+    {
+      id: 'utils/crypto.py',
+      type: 'dependent',
+      ring: 2,
+      coverage: 0.55,
+      lines: 67,
+      functions: ['hash_password', 'verify_hash', 'generate_token'],
+    },
+    {
+      id: 'workers/cleanup.py',
+      type: 'dependent',
+      ring: 2,
+      coverage: 0.12,
+      lines: 45,
+      functions: ['purge_expired_sessions'],
+    },
+
     // Ring 3 — Deep transitive
-    { id: "api/webhooks.py",         type: "dependent",  ring: 3, coverage: 0.20, lines: 89,   functions: ["handle_webhook", "verify_signature"] },
-    { id: "services/billing_svc.py", type: "dependent",  ring: 3, coverage: 0.38, lines: 267,  functions: ["charge_user", "process_refund"] },
-    { id: "tests/test_admin.py",     type: "test",       ring: 3, coverage: 0.95, lines: 112,  functions: ["test_admin_access", "test_user_management"] },
+    {
+      id: 'api/webhooks.py',
+      type: 'dependent',
+      ring: 3,
+      coverage: 0.2,
+      lines: 89,
+      functions: ['handle_webhook', 'verify_signature'],
+    },
+    {
+      id: 'services/billing_svc.py',
+      type: 'dependent',
+      ring: 3,
+      coverage: 0.38,
+      lines: 267,
+      functions: ['charge_user', 'process_refund'],
+    },
+    {
+      id: 'tests/test_admin.py',
+      type: 'test',
+      ring: 3,
+      coverage: 0.95,
+      lines: 112,
+      functions: ['test_admin_access', 'test_user_management'],
+    },
   ],
   links: [
-    { source: "auth/login.py",         target: "api/routes.py",         weight: 3 },
-    { source: "auth/login.py",         target: "middleware/auth_mw.py",  weight: 2 },
-    { source: "auth/login.py",         target: "services/user_svc.py",  weight: 2 },
-    { source: "auth/login.py",         target: "tests/test_auth.py",    weight: 1 },
-    { source: "api/routes.py",         target: "api/admin.py",          weight: 2 },
-    { source: "api/routes.py",         target: "models/user.py",        weight: 1 },
-    { source: "middleware/auth_mw.py",  target: "utils/crypto.py",       weight: 2 },
-    { source: "services/user_svc.py",  target: "services/email_svc.py", weight: 1 },
-    { source: "services/user_svc.py",  target: "models/user.py",        weight: 2 },
-    { source: "services/user_svc.py",  target: "workers/cleanup.py",    weight: 1 },
-    { source: "api/admin.py",          target: "api/webhooks.py",       weight: 1 },
-    { source: "api/admin.py",          target: "services/billing_svc.py", weight: 1 },
-    { source: "api/admin.py",          target: "tests/test_admin.py",   weight: 1 },
+    { source: 'auth/login.py', target: 'api/routes.py', weight: 3 },
+    { source: 'auth/login.py', target: 'middleware/auth_mw.py', weight: 2 },
+    { source: 'auth/login.py', target: 'services/user_svc.py', weight: 2 },
+    { source: 'auth/login.py', target: 'tests/test_auth.py', weight: 1 },
+    { source: 'api/routes.py', target: 'api/admin.py', weight: 2 },
+    { source: 'api/routes.py', target: 'models/user.py', weight: 1 },
+    { source: 'middleware/auth_mw.py', target: 'utils/crypto.py', weight: 2 },
+    {
+      source: 'services/user_svc.py',
+      target: 'services/email_svc.py',
+      weight: 1,
+    },
+    { source: 'services/user_svc.py', target: 'models/user.py', weight: 2 },
+    { source: 'services/user_svc.py', target: 'workers/cleanup.py', weight: 1 },
+    { source: 'api/admin.py', target: 'api/webhooks.py', weight: 1 },
+    { source: 'api/admin.py', target: 'services/billing_svc.py', weight: 1 },
+    { source: 'api/admin.py', target: 'tests/test_admin.py', weight: 1 },
   ],
 };
-
 
 // ─── Mock: Post Mortem Timeline Data ───
 // Historical bug patterns associated with changes to auth/login.py
 export const postMortemData = {
   fingerprints: [
     {
-      id: "FP-001",
-      name: "Auth Token Invalidation Storm",
-      severity: "critical",
+      id: 'FP-001',
+      name: 'Auth Token Invalidation Storm',
+      severity: 'critical',
       confidence: 0.92,
-      description: "Changes to token validation logic historically cause cascading session invalidations across microservices.",
+      description:
+        'Changes to token validation logic historically cause cascading session invalidations across microservices.',
       occurrences: 7,
-      lastSeen: "2026-01-15",
-      relatedFiles: ["auth/login.py", "middleware/auth_mw.py", "utils/crypto.py"],
-      rule: "{login.py, auth_mw.py} → bug_fix (support=0.14, confidence=0.92)",
+      lastSeen: '2026-01-15',
+      relatedFiles: [
+        'auth/login.py',
+        'middleware/auth_mw.py',
+        'utils/crypto.py',
+      ],
+      rule: '{login.py, auth_mw.py} → bug_fix (support=0.14, confidence=0.92)',
     },
     {
-      id: "FP-002",
-      name: "Email Service Null Pointer",
-      severity: "high",
+      id: 'FP-002',
+      name: 'Email Service Null Pointer',
+      severity: 'high',
       confidence: 0.78,
-      description: "When user service changes coincide with auth changes, the email service receives null user objects 78% of the time.",
+      description:
+        'When user service changes coincide with auth changes, the email service receives null user objects 78% of the time.',
       occurrences: 4,
-      lastSeen: "2025-11-03",
-      relatedFiles: ["services/user_svc.py", "services/email_svc.py"],
-      rule: "{user_svc.py, login.py} → bug_fix (support=0.08, confidence=0.78)",
+      lastSeen: '2025-11-03',
+      relatedFiles: ['services/user_svc.py', 'services/email_svc.py'],
+      rule: '{user_svc.py, login.py} → bug_fix (support=0.08, confidence=0.78)',
     },
     {
-      id: "FP-003",
-      name: "Admin Dashboard 403 Regression",
-      severity: "medium",
+      id: 'FP-003',
+      name: 'Admin Dashboard 403 Regression',
+      severity: 'medium',
       confidence: 0.65,
-      description: "Auth middleware changes break admin permission checks, causing false 403 responses for admin users.",
+      description:
+        'Auth middleware changes break admin permission checks, causing false 403 responses for admin users.',
       occurrences: 3,
-      lastSeen: "2025-09-22",
-      relatedFiles: ["middleware/auth_mw.py", "api/admin.py"],
-      rule: "{auth_mw.py, admin.py} → bug_fix (support=0.06, confidence=0.65)",
+      lastSeen: '2025-09-22',
+      relatedFiles: ['middleware/auth_mw.py', 'api/admin.py'],
+      rule: '{auth_mw.py, admin.py} → bug_fix (support=0.06, confidence=0.65)',
     },
     {
-      id: "FP-004",
-      name: "Session Cleanup Race Condition",
-      severity: "low",
+      id: 'FP-004',
+      name: 'Session Cleanup Race Condition',
+      severity: 'low',
       confidence: 0.45,
-      description: "Concurrent session cleanup with token refresh creates stale session references in the database.",
+      description:
+        'Concurrent session cleanup with token refresh creates stale session references in the database.',
       occurrences: 2,
-      lastSeen: "2025-07-10",
-      relatedFiles: ["workers/cleanup.py", "auth/login.py"],
-      rule: "{cleanup.py, login.py} → bug_fix (support=0.04, confidence=0.45)",
+      lastSeen: '2025-07-10',
+      relatedFiles: ['workers/cleanup.py', 'auth/login.py'],
+      rule: '{cleanup.py, login.py} → bug_fix (support=0.04, confidence=0.45)',
     },
   ],
   timeline: [
-    { date: "2025-01-10", bugs: 2, commits: 15, fingerprint: "FP-001" },
-    { date: "2025-02-14", bugs: 0, commits: 22, fingerprint: null },
-    { date: "2025-03-05", bugs: 3, commits: 18, fingerprint: "FP-001" },
-    { date: "2025-04-20", bugs: 1, commits: 12, fingerprint: "FP-002" },
-    { date: "2025-05-11", bugs: 0, commits: 25, fingerprint: null },
-    { date: "2025-06-08", bugs: 1, commits: 20, fingerprint: "FP-003" },
-    { date: "2025-07-10", bugs: 2, commits: 14, fingerprint: "FP-004" },
-    { date: "2025-08-15", bugs: 0, commits: 30, fingerprint: null },
-    { date: "2025-09-22", bugs: 1, commits: 16, fingerprint: "FP-003" },
-    { date: "2025-10-05", bugs: 0, commits: 19, fingerprint: null },
-    { date: "2025-11-03", bugs: 2, commits: 21, fingerprint: "FP-002" },
-    { date: "2025-12-12", bugs: 0, commits: 28, fingerprint: null },
-    { date: "2026-01-15", bugs: 3, commits: 17, fingerprint: "FP-001" },
-    { date: "2026-02-20", bugs: 0, commits: 24, fingerprint: null },
+    { date: '2025-01-10', bugs: 2, commits: 15, fingerprint: 'FP-001' },
+    { date: '2025-02-14', bugs: 0, commits: 22, fingerprint: null },
+    { date: '2025-03-05', bugs: 3, commits: 18, fingerprint: 'FP-001' },
+    { date: '2025-04-20', bugs: 1, commits: 12, fingerprint: 'FP-002' },
+    { date: '2025-05-11', bugs: 0, commits: 25, fingerprint: null },
+    { date: '2025-06-08', bugs: 1, commits: 20, fingerprint: 'FP-003' },
+    { date: '2025-07-10', bugs: 2, commits: 14, fingerprint: 'FP-004' },
+    { date: '2025-08-15', bugs: 0, commits: 30, fingerprint: null },
+    { date: '2025-09-22', bugs: 1, commits: 16, fingerprint: 'FP-003' },
+    { date: '2025-10-05', bugs: 0, commits: 19, fingerprint: null },
+    { date: '2025-11-03', bugs: 2, commits: 21, fingerprint: 'FP-002' },
+    { date: '2025-12-12', bugs: 0, commits: 28, fingerprint: null },
+    { date: '2026-01-15', bugs: 3, commits: 17, fingerprint: 'FP-001' },
+    { date: '2026-02-20', bugs: 0, commits: 24, fingerprint: null },
   ],
 };
 
-
 // ─── Mock: LLM Analysis Output ───
 export const llmAnalysisData = {
-  status: "complete",
-  badge: "YELLOW",  // GREEN | YELLOW | RED
+  status: 'complete',
+  badge: 'YELLOW', // GREEN | YELLOW | RED
   riskScore: 67,
   agents: {
     blastRadiusInterpreter: {
-      name: "Blast Radius Interpreter",
-      status: "complete",
+      name: 'Blast Radius Interpreter',
+      status: 'complete',
       output: `## Blast Radius Analysis
 
 **Changed File:** \`auth/login.py\` — 148 lines, 3 functions modified
@@ -140,8 +241,8 @@ This change touches the core authentication module. The blast radius extends to 
 Add integration tests for the auth→admin→webhooks path before merging. The coverage on \`workers/cleanup.py\` is dangerously low.`,
     },
     patternExplainer: {
-      name: "Pattern Explainer",
-      status: "complete",
+      name: 'Pattern Explainer',
+      status: 'complete',
       output: `## Pattern Analysis
 
 ### Matching Fingerprints Found: 4
@@ -166,8 +267,8 @@ Low confidence but worth noting — cleanup workers don't handle mid-flight sess
 Based on pattern density and confidence levels, this change carries moderate-to-high risk.`,
     },
     orchestrator: {
-      name: "Merge Orchestrator",
-      status: "complete",
+      name: 'Merge Orchestrator',
+      status: 'complete',
       output: `## Merge Recommendation
 
 ### 🟡 YELLOW — Merge with Caution
@@ -193,16 +294,15 @@ This assessment is based on 14 months of commit history (392 commits, 16 bug-fix
   },
 };
 
-
 // ─── Mock: Merge Badge Data ───
 export const mergeBadgeData = {
-  badge: "YELLOW",
+  badge: 'YELLOW',
   riskScore: 67,
-  changedFile: "auth/login.py",
-  prTitle: "feat: implement JWT refresh token rotation",
+  changedFile: 'auth/login.py',
+  prTitle: 'feat: implement JWT refresh token rotation',
   prNumber: 247,
-  author: "balaa",
-  timestamp: "2026-03-09T14:30:00Z",
+  author: 'balaa',
+  timestamp: '2026-03-09T14:30:00Z',
   summary: {
     filesAffected: 13,
     dependencyRings: 3,
