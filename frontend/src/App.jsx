@@ -29,7 +29,7 @@ export default function App() {
   const runAnalysis = async () => {
     setIsLoading(true);
     setError(null);
-    setLlmAnalysis(null); // Reset LLM output
+    setLlmAnalysis(null);
 
     const reqBody = {
       repo_path: repoPath,
@@ -38,7 +38,6 @@ export default function App() {
     };
 
     try {
-      // 1. Parallel fetch for structured data
       const [blastRes, pmRes, recRes] = await Promise.all([
         fetch('/api/blast-radius', {
           method: 'POST',
@@ -67,8 +66,7 @@ export default function App() {
 
       setBlastData(bData);
       setPostMortem(pData);
-      
-      // Update badge/header info
+
       setBadgeData(prev => ({
         ...prev,
         prTitle: `PR Analysis: ${prBranch}`,
@@ -81,7 +79,6 @@ export default function App() {
         }
       }));
 
-      // Initial LLM state (non-streaming recommendation)
       setLlmAnalysis({
         status: rData.verdict,
         badge: rData.verdict,
@@ -95,7 +92,6 @@ export default function App() {
         }
       });
 
-      // 2. Start Streaming for detailed Analysis
       streamLlmAnalysis(reqBody);
 
     } catch (err) {
@@ -119,7 +115,6 @@ export default function App() {
       const decoder = new TextDecoder();
       let streamedContent = "";
 
-      // Initialize the streaming agent in state
       setLlmAnalysis(prev => ({
         ...prev,
         agents: {
@@ -138,7 +133,7 @@ export default function App() {
 
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
-        
+
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const token = line.slice(6);
@@ -174,27 +169,28 @@ export default function App() {
           }
         }
       }
-    } catch (e) {
-      console.error("Streaming error:", e);
+    } catch (_e) {
+      // Streaming failed silently — non-critical
     }
   };
 
   // Run on mount
   useEffect(() => {
     runAnalysis();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="app-container">
       {/* ═══ Header ═══ */}
-      <header className="app-header animate-in">
-        <div className="app-header__brand">
-          <div className="app-header__logo">M</div>
+      <header className="app-header animate-fade-in" role="banner">
+        <nav aria-label="Main navigation" className="app-header__brand">
+          <a href="/" aria-label="MergeGuard home" className="app-header__logo">M</a>
           <div>
             <div className="app-header__title">MergeGuard</div>
             <div className="app-header__subtitle">Pre-Merge Intelligence</div>
           </div>
-        </div>
+        </nav>
 
         <div className="app-header__meta">
           <div className="app-header__pr-info">
@@ -207,50 +203,64 @@ export default function App() {
       </header>
 
       {/* ═══ Analysis Form ═══ */}
-      <div className="app-form animate-in" style={{ animationDelay: '0.1s' }}>
+      <div className="app-form animate-fade-in" style={{ animationDelay: '0.1s' }} role="form" aria-label="Analysis configuration">
         <div className="form-group">
-          <label>Repository Path</label>
-          <input 
-            className="app-input" 
-            value={repoPath} 
+          <label htmlFor="repo-path-input">Repository Path</label>
+          <input
+            id="repo-path-input"
+            className="app-input"
+            value={repoPath}
             onChange={(e) => setRepoPath(e.target.value)}
             placeholder="C:/path/to/repo"
           />
         </div>
         <div className="form-group">
-          <label>PR Branch</label>
-          <input 
-            className="app-input" 
-            value={prBranch} 
+          <label htmlFor="pr-branch-input">PR Branch</label>
+          <input
+            id="pr-branch-input"
+            className="app-input"
+            value={prBranch}
             onChange={(e) => setPrBranch(e.target.value)}
             placeholder="feature/branch"
           />
         </div>
-        <button 
-          className="app-btn" 
-          onClick={runAnalysis} 
+        <button
+          className="app-btn"
+          onClick={runAnalysis}
           disabled={isLoading}
+          aria-label={isLoading ? 'Analysis in progress' : 'Run intelligence analysis'}
+          aria-busy={isLoading}
         >
           {isLoading ? 'Analyzing...' : 'Run Intelligence'}
         </button>
       </div>
 
       {error && (
-        <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--badge-red-bg)', color: 'var(--badge-red)', border: '1px solid var(--badge-red)' }}>
+        <div
+          role="alert"
+          aria-live="assertive"
+          style={{
+            padding: '16px',
+            borderRadius: '8px',
+            background: 'var(--badge-red-bg)',
+            color: 'var(--badge-red)',
+            border: '1px solid var(--badge-red)'
+          }}
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {/* ═══ 3-Panel Grid ═══ */}
-      <main className="panels-grid">
+      <main className="panels-grid" role="main">
         {/* Panel 1 — Blast Radius */}
         <div className="panel blast-radius">
           {!blastData && isLoading ? (
-             <div className="panel__content" style={{ padding: 20 }}>
-               <div className="skeleton-loader" style={{ height: '400px', width: '100%' }}></div>
-             </div>
+            <div className="panel__content" style={{ padding: 20 }}>
+              <div className="skeleton-loader" style={{ height: '400px', width: '100%' }} aria-label="Loading blast radius data" />
+            </div>
           ) : blastData ? (
-             <BlastRadiusGraph data={blastData} />
+            <BlastRadiusGraph data={blastData} />
           ) : (
             <div className="panel__content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 400, color: 'var(--text-muted)' }}>
               Awaiting data...
@@ -262,10 +272,10 @@ export default function App() {
         <div className="panel postmortem">
           {!postMortem && isLoading ? (
             <div className="panel__content" style={{ padding: 20 }}>
-               <div className="skeleton-loader" style={{ height: '300px', width: '100%' }}></div>
-               <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 20 }}></div>
-               <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 10 }}></div>
-             </div>
+              <div className="skeleton-loader" style={{ height: '300px', width: '100%' }} aria-label="Loading post mortem data" />
+              <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 20 }} />
+              <div className="skeleton-loader" style={{ height: '50px', width: '100%', marginTop: 10 }} />
+            </div>
           ) : postMortem ? (
             <PostMortemTimeline data={postMortem} />
           ) : (
@@ -279,9 +289,9 @@ export default function App() {
         <div className="panel llm-panel">
           {!llmAnalysis && isLoading ? (
             <div className="panel__content" style={{ padding: 20 }}>
-               <div className="skeleton-loader" style={{ height: '80px', width: '100%', borderRadius: 16 }}></div>
-               <div className="skeleton-loader" style={{ height: '150px', width: '100%', marginTop: 20 }}></div>
-             </div>
+              <div className="skeleton-loader" style={{ height: '80px', width: '100%', borderRadius: 16 }} aria-label="Loading LLM analysis" />
+              <div className="skeleton-loader" style={{ height: '150px', width: '100%', marginTop: 20 }} />
+            </div>
           ) : llmAnalysis ? (
             <LLMPanel data={llmAnalysis} badgeData={badgeData} />
           ) : (
@@ -293,14 +303,17 @@ export default function App() {
       </main>
 
       {/* ═══ Footer ═══ */}
-      <footer style={{
-        textAlign: 'center',
-        padding: '16px 0',
-        fontSize: '0.7rem',
-        color: '#475569',
-        fontFamily: "'JetBrains Mono', monospace",
-        borderTop: '1px solid rgba(99, 102, 241, 0.08)',
-      }}>
+      <footer
+        role="contentinfo"
+        style={{
+          textAlign: 'center',
+          padding: '16px 0',
+          fontSize: '0.7rem',
+          color: '#475569',
+          fontFamily: "'JetBrains Mono', monospace",
+          borderTop: '1px solid rgba(99, 102, 241, 0.08)',
+        }}
+      >
         MergeGuard v0.1.0 — FOSS Hack 2026 · 100% Open Source · MIT License
       </footer>
     </div>

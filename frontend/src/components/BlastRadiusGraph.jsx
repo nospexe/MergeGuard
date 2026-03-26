@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 /**
  * BlastRadiusGraph — D3.js Force-Directed Graph
- * 
+ *
  * Renders a concentric ring layout showing the blast radius of a code change.
  * - Centre: changed file
  * - Ring 1–3: dependency depth (direct → transitive → deep)
@@ -65,7 +65,9 @@ export default function BlastRadiusGraph({ data }) {
     const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
-      .attr('viewBox', `0 0 ${width} ${height}`);
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('role', 'img')
+      .attr('aria-label', `Blast radius graph showing ${data.nodes.length} affected files and ${(data.links || data.edges || []).length} dependency edges`);
 
     // Defs for glow filters and gradients
     const defs = svg.append('defs');
@@ -114,7 +116,8 @@ export default function BlastRadiusGraph({ data }) {
       y: cy + ringRadii[n.ring] * Math.sin(Math.random() * Math.PI * 2),
     }));
 
-    const links = data.links.map(l => ({
+    const linkData = data.links || data.edges || [];
+    const links = linkData.map(l => ({
       ...l,
       source: nodes.find(n => n.id === l.source) || l.source,
       target: nodes.find(n => n.id === l.target) || l.target,
@@ -143,6 +146,9 @@ export default function BlastRadiusGraph({ data }) {
       .data(nodes)
       .join('g')
       .attr('cursor', 'pointer')
+      .attr('tabindex', '0')
+      .attr('role', 'button')
+      .attr('aria-label', d => `${d.id}, Ring ${d.ring}, Coverage ${Math.round(d.coverage * 100)}%`)
       .call(d3.drag()
         .on('start', (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -163,19 +169,16 @@ export default function BlastRadiusGraph({ data }) {
     // Node circles
     nodeElements.append('circle')
       .attr('r', d => nodeRadius(d))
-      .attr('fill', d => {
-        const c = coverageColor(d.coverage);
-        return d.ring === 0 ? c : c;
-      })
+      .attr('fill', d => coverageColor(d.coverage))
       .attr('fill-opacity', d => d.ring === 0 ? 0.9 : 0.15 + d.coverage * 0.55)
       .attr('stroke', d => coverageColor(d.coverage))
       .attr('stroke-width', d => d.ring === 0 ? 3 : 1.5)
       .attr('filter', d => d.ring === 0 ? 'url(#glow-strong)' : d.coverage < 0.4 ? 'url(#glow)' : 'none');
 
     // Coverage ring (arc showing %)
-    nodeElements.each(function(d) {
+    nodeElements.each(function (d) {
       const r = nodeRadius(d);
-      if (d.ring === 0) return; // skip center node
+      if (d.ring === 0) return;
 
       const arc = d3.arc()
         .innerRadius(r + 3)
@@ -197,6 +200,7 @@ export default function BlastRadiusGraph({ data }) {
       .attr('dy', '0.35em')
       .attr('font-size', d => nodeRadius(d) * 0.7)
       .attr('fill', 'white')
+      .attr('aria-hidden', 'true')
       .text('✓');
 
     // Center node label (inside)
@@ -224,26 +228,24 @@ export default function BlastRadiusGraph({ data }) {
 
     nodeElements
       .on('mouseover', (event, d) => {
-        // Highlight connected paths
         linkElements
-          .attr('stroke', l => (l.source.id === d.id || l.target.id === d.id) 
+          .attr('stroke', l => (l.source.id === d.id || l.target.id === d.id)
             ? coverageColor(d.coverage) : 'rgba(99, 102, 241, 0.08)')
-          .attr('stroke-width', l => (l.source.id === d.id || l.target.id === d.id) 
+          .attr('stroke-width', l => (l.source.id === d.id || l.target.id === d.id)
             ? (l.weight || 1) * 2 : l.weight || 1)
-          .attr('stroke-opacity', l => (l.source.id === d.id || l.target.id === d.id) 
+          .attr('stroke-opacity', l => (l.source.id === d.id || l.target.id === d.id)
             ? 0.8 : 0.3);
 
         nodeElements.select('circle')
           .attr('opacity', n => {
             if (n.id === d.id) return 1;
-            const connected = links.some(l => 
-              (l.source.id === d.id && l.target.id === n.id) || 
+            const connected = links.some(l =>
+              (l.source.id === d.id && l.target.id === n.id) ||
               (l.target.id === d.id && l.source.id === n.id)
             );
             return connected ? 1 : 0.3;
           });
 
-        // Show tooltip
         tooltip.classed('visible', true);
         tooltip.html(`
           <div class="graph-tooltip__title">${d.id}</div>
@@ -301,42 +303,44 @@ export default function BlastRadiusGraph({ data }) {
 
   if (!data) return null;
 
+  const linkCount = (data.links || data.edges || []).length;
+
   return (
-    <div className="panel blast-radius animate-in">
+    <section className="panel blast-radius animate-scale-in" aria-label="Blast radius visualization">
       <div className="panel__header">
         <div className="panel__title">
-          <span className="panel__title-icon">💥</span>
+          <span className="panel__title-icon" aria-hidden="true">💥</span>
           Blast Radius Graph
         </div>
-        <span className="panel__badge" style={{ 
-          background: 'rgba(99, 102, 241, 0.12)', 
-          color: '#a5b4fc' 
+        <span className="panel__badge" style={{
+          background: 'rgba(99, 102, 241, 0.12)',
+          color: '#a5b4fc'
         }}>
-          {data.nodes.length} files · {data.links.length} edges
+          {data.nodes.length} files · {linkCount} edges
         </span>
       </div>
       <div className="panel__content" ref={containerRef} style={{ position: 'relative' }}>
         <svg ref={svgRef} className="blast-radius__canvas" />
-        <div ref={tooltipRef} className="graph-tooltip" />
+        <div ref={tooltipRef} className="graph-tooltip" role="tooltip" />
       </div>
-      <div className="blast-radius__legend">
+      <div className="blast-radius__legend" aria-label="Graph legend">
         <div className="blast-radius__legend-item">
-          <div className="blast-radius__legend-dot" style={{ background: '#10b981' }} />
+          <div className="blast-radius__legend-dot" style={{ background: '#10b981' }} aria-hidden="true" />
           <span>{'> 80% coverage'}</span>
         </div>
         <div className="blast-radius__legend-item">
-          <div className="blast-radius__legend-dot" style={{ background: '#f59e0b' }} />
+          <div className="blast-radius__legend-dot" style={{ background: '#f59e0b' }} aria-hidden="true" />
           <span>40–80% coverage</span>
         </div>
         <div className="blast-radius__legend-item">
-          <div className="blast-radius__legend-dot" style={{ background: '#f43f5e' }} />
+          <div className="blast-radius__legend-dot" style={{ background: '#f43f5e' }} aria-hidden="true" />
           <span>{'< 40% coverage'}</span>
         </div>
         <div className="blast-radius__legend-item">
-          <div className="blast-radius__legend-dot" style={{ 
-            background: 'transparent', 
-            border: '2px solid #94a3b8' 
-          }} />
+          <div className="blast-radius__legend-dot" style={{
+            background: 'transparent',
+            border: '2px solid #94a3b8'
+          }} aria-hidden="true" />
           <span>Test file</span>
         </div>
         <div className="blast-radius__legend-item" style={{ marginLeft: 'auto' }}>
@@ -348,21 +352,25 @@ export default function BlastRadiusGraph({ data }) {
 
       {/* Selected node detail card */}
       {selectedNode && (
-        <div style={{
-          position: 'absolute',
-          bottom: 60,
-          right: 24,
-          background: 'rgba(17, 24, 39, 0.95)',
-          border: `1px solid ${coverageColor(selectedNode.coverage)}40`,
-          borderRadius: '10px',
-          padding: '12px 16px',
-          maxWidth: '260px',
-          fontSize: '0.78rem',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          animation: 'fadeIn 250ms ease-out',
-          zIndex: 50,
-        }}>
+        <div
+          role="dialog"
+          aria-label={`Details for ${selectedNode.id}`}
+          style={{
+            position: 'absolute',
+            bottom: 60,
+            right: 24,
+            background: 'rgba(17, 24, 39, 0.95)',
+            border: `1px solid ${coverageColor(selectedNode.coverage)}40`,
+            borderRadius: '10px',
+            padding: '12px 16px',
+            maxWidth: '260px',
+            fontSize: '0.78rem',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            animation: 'fadeIn 250ms ease-out',
+            zIndex: 50,
+          }}
+        >
           <div style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: '0.82rem', marginBottom: 4, color: coverageColor(selectedNode.coverage) }}>
             {selectedNode.id}
           </div>
@@ -380,6 +388,7 @@ export default function BlastRadiusGraph({ data }) {
           </div>
           <button
             onClick={() => setSelectedNode(null)}
+            aria-label="Close node details"
             style={{
               position: 'absolute', top: 6, right: 8,
               background: 'none', border: 'none', color: '#64748b',
@@ -388,6 +397,6 @@ export default function BlastRadiusGraph({ data }) {
           >✕</button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

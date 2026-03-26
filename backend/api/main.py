@@ -1,4 +1,6 @@
+import logging
 import os
+from pathlib import Path
 from dataclasses import asdict
 
 from dotenv import load_dotenv
@@ -230,7 +232,8 @@ def resolve_changed_symbols(repo_path: str, base: str, pr: str) -> list[str]:
         # Get list of changed Python files between base and pr
         diff = repo.git.diff(f"{base}...{pr}", "--name-only", "*.py")
         files = diff.splitlines()
-        if not files: return [pr] # Fallback
+        if not files:
+            return [pr]  # Fallback
         
         # Simplified: all symbols in changed files are considered "changed"
         # for the purpose of a high-level blast radius report.
@@ -249,7 +252,7 @@ def resolve_changed_symbols(repo_path: str, base: str, pr: str) -> list[str]:
         
         return affected_symbols if affected_symbols else [pr]
     except Exception as e:
-        print(f"Symbol resolution error: {e}")
+        logging.warning("Symbol resolution error: %s", e)
         return [pr]
 
 @app.post("/api/blast-radius", response_model=BlastRadiusResponse)
@@ -278,7 +281,7 @@ def get_blast_radius(req: AnalyzeRequest):
                 overall_coverage = cvm.overall_coverage_percent
                 coverage_annotations = cvm.annotations
             except Exception as e:
-                print(f"Coverage overlay error: {e}")
+                logging.warning("Coverage overlay error: %s", e)
 
         # 3. Analyze Blast Radius with Coverage Data
         result = analyze_blast_radius(
