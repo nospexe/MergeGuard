@@ -173,10 +173,7 @@ class TestRepositoryScanner:
         write_file(tmp_path, "myapp/utils.py", "def helper(): pass")
         scanner = RepositoryScanner(tmp_path)
         tables = scanner.scan()
-<<<<<<< HEAD
-=======
 
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
         for key in tables:
             assert "venv" not in key
         assert "myapp.utils" in tables
@@ -328,15 +325,8 @@ class TestRiskScorer:
         """
         scorer = RiskScorer()
         edges = [{"from": "utils.helpers", "to": "base", "depth": 1}]
-<<<<<<< HEAD
         score_normal, _ = scorer.score(["utils.helpers"], [], edges, [])
         score_core, _ = scorer.score(["auth.helpers"], [], edges, [])
-=======
-
-        score_normal, _ = scorer.score([], ["utils.helpers"], edges, [])
-        score_core, _ = scorer.score([], ["auth.routes"], edges, [])
-
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
         assert score_core > score_normal
 
     def test_score_does_not_exceed_one(self):

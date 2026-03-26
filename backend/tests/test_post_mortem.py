@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-=======
 """
 test_post_mortem.py — Pytest Test Suite for Armaan's PostMortem Engine
 =======================================================================
 Run with: pytest tests/test_post_mortem.py -v
 """
 
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
 import sys
 import json
 from pathlib import Path
@@ -19,8 +16,6 @@ from engines.post_mortem import (
     build_transaction_table,
 )
 
-<<<<<<< HEAD
-=======
 # ─────────────────────────────────────────────
 # MOCK DATA
 # ─────────────────────────────────────────────
@@ -65,25 +60,9 @@ MOCK_RULES = [
         "lift": 1.8,
     },
 ]
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
 
 
 
-<<<<<<< HEAD
-def test_fix_keyword_returns_bug_fix():
-    assert classify_commit("fix login error") == "bug-fix"
-
-def test_bug_keyword_returns_bug_fix():
-    assert classify_commit("bug in payment flow") == "bug-fix"
-
-def test_patch_keyword_returns_bug_fix():
-    assert classify_commit("patch security issue") == "bug-fix"
-
-def test_error_keyword_returns_bug_fix():
-    assert classify_commit("error handling added") == "bug-fix"
-
-def test_issue_keyword_returns_bug_fix():
-=======
 def test_fix_keyword_returns_bugfix():
     assert classify_commit("fix login error") == "bug-fix"
 
@@ -97,7 +76,6 @@ def test_error_keyword_returns_bugfix():
     assert classify_commit("error handling added") == "bug-fix"
 
 def test_issue_keyword_returns_bugfix():
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
     assert classify_commit("issue with auth resolved") == "bug-fix"
 
 def test_refactor_keyword_returns_refactor():
@@ -118,7 +96,6 @@ def test_unrecognised_message_returns_feature():
 def test_empty_message_returns_feature():
     assert classify_commit("") == "feature"
 
-<<<<<<< HEAD
 def test_uppercase_message_is_handled_correctly():
     assert classify_commit("FIX crash on startup") == "bug-fix"
 
@@ -137,7 +114,6 @@ def test_mine_commits_returns_at_least_1_commit(valid_repo):
 def test_each_commit_has_required_keys(valid_repo):
     commits = mine_commits(str(valid_repo))
     for c in commits:
-=======
 def test_uppercase_message_handled_correctly():
     assert classify_commit("FIX crash on startup") == "bug-fix"
 
@@ -157,14 +133,12 @@ def test_mine_commits_returns_at_least_one():
 
 def test_each_commit_has_required_keys():
     for c in MOCK_COMMITS:
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
         assert "sha" in c
         assert "message" in c
         assert "type" in c
         assert "files" in c
         assert "date" in c
 
-<<<<<<< HEAD
 def test_sha_is_8_characters_long(valid_repo):
     commits = mine_commits(str(valid_repo))
     for c in commits:
@@ -205,7 +179,6 @@ def test_table_columns_are_all_file_names(valid_repo):
 def test_table_values_are_all_boolean(valid_repo):
     commits = mine_commits(str(valid_repo))
     df = build_transaction_table(commits)
-=======
 def test_sha_is_8_characters():
     for c in MOCK_COMMITS:
         assert len(c["sha"]) == 8
@@ -238,7 +211,6 @@ def test_table_has_same_rows_as_commits():
 
 def test_table_values_are_boolean():
     df = build_transaction_table(MOCK_COMMITS)
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
     for col in df.columns:
         assert df[col].dtype == bool
 
@@ -246,17 +218,13 @@ def test_empty_commits_returns_empty_table():
     df = build_transaction_table([])
     assert len(df) == 0
 
-<<<<<<< HEAD
 def test_commit_with_no_files_produces_all_false_row():
-=======
 def test_commit_with_no_files():
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
     commits = [{"sha": "abc12345", "message": "test", "type": "feature", "files": [], "date": "2026-03-01"}]
     df = build_transaction_table(commits)
     assert len(df) == 1
 
 
-<<<<<<< HEAD
 def test_mine_association_rules_returns_a_list(valid_repo):
     rules = mine_association_rules(str(valid_repo))
     assert isinstance(rules, list)
@@ -264,24 +232,12 @@ def test_mine_association_rules_returns_a_list(valid_repo):
 def test_rule_each_has_required_keys(valid_repo):
     rules = mine_association_rules(str(valid_repo))
     for r in rules:
-=======
-# ─────────────────────────────────────────────
-# SECTION 4: association rules (mock data)
-# ─────────────────────────────────────────────
-
-def test_rules_returns_list():
-    assert isinstance(MOCK_RULES, list)
-
-def test_each_rule_has_required_keys():
-    for r in MOCK_RULES:
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
         assert "antecedents" in r
         assert "consequents" in r
         assert "support" in r
         assert "confidence" in r
         assert "lift" in r
 
-<<<<<<< HEAD
 def test_confidence_is_always_between_0_and_1(valid_repo):
     rules = mine_association_rules(str(valid_repo))
     for r in rules:
@@ -310,28 +266,4 @@ def test_consequents_is_always_a_list(valid_repo):
 def test_rules_output_is_json_serialisable(valid_repo):
     rules = mine_association_rules(str(valid_repo))
     parsed = json.loads(json.dumps(rules))
-=======
-def test_confidence_between_0_and_1():
-    for r in MOCK_RULES:
-        assert 0 <= r["confidence"] <= 1
-
-def test_support_between_0_and_1():
-    for r in MOCK_RULES:
-        assert 0 <= r["support"] <= 1
-
-def test_lift_is_positive():
-    for r in MOCK_RULES:
-        assert r["lift"] > 0
-
-def test_antecedents_is_list():
-    for r in MOCK_RULES:
-        assert isinstance(r["antecedents"], list)
-
-def test_consequents_is_list():
-    for r in MOCK_RULES:
-        assert isinstance(r["consequents"], list)
-
-def test_rules_json_serialisable():
-    parsed = json.loads(json.dumps(MOCK_RULES))
->>>>>>> 03f0d6388f049a12bd00d71a66aa6f3f9ff4eeb9
     assert isinstance(parsed, list)
