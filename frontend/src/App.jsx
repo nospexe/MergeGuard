@@ -4,8 +4,8 @@ import PostMortemTimeline from './components/PostMortemTimeline';
 import LLMPanel from './components/LLMPanel';
 
 // Default values for the demo
-const DEFAULT_REPO = 'c:/Users/gurut/MergeGuard-1';
-const DEFAULT_PR = 'dev/balaa-frontend';
+const DEFAULT_REPO = '';
+const DEFAULT_PR = '';
 
 export default function App() {
   const [repoPath, setRepoPath] = useState(DEFAULT_REPO);
@@ -177,10 +177,10 @@ export default function App() {
     }
   };
 
-  // Run on mount
   useEffect(() => {
-    runAnalysis();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (repoPath && prBranch) {
+      runAnalysis();
+    }
   }, []);
 
   return (
@@ -222,7 +222,7 @@ export default function App() {
             className="app-input"
             value={repoPath}
             onChange={(e) => setRepoPath(e.target.value)}
-            placeholder="C:/path/to/repo"
+            placeholder="/absolute/path/to/your/local/repo"
           />
         </div>
         <div className="form-group">
@@ -232,7 +232,7 @@ export default function App() {
             className="app-input"
             value={prBranch}
             onChange={(e) => setPrBranch(e.target.value)}
-            placeholder="feature/branch"
+            placeholder="feature/my-branch"
           />
         </div>
         <button
