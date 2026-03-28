@@ -10,19 +10,13 @@ import {
   ReferenceDot,
 } from 'recharts';
 
-/**
- * PostMortemTimeline — Week 3 Panel
- *
- * Displays historical bug patterns associated with the changed file:
- * - Timeline chart showing bugs vs commits over time
- * - Fingerprint cards with severity, confidence, and related files
- */
 export default function PostMortemTimeline({ data }) {
   const [expandedCard, setExpandedCard] = useState(null);
 
   if (!data) return null;
 
-  const { fingerprints, timeline } = data;
+  const fingerprints = data.matches || [];
+  const timeline = data.timeline || [];
 
   // Enrich timeline with month labels
   const chartData = (timeline || []).map((entry) => {
