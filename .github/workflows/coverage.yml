@@ -53,10 +53,10 @@ jobs:
             --source=engines,agents,api,utils,db \
             -m pytest tests/ -v --tb=short
           coverage report \
-            --omit="tests/*,run_tests.py" \
-            --fail-under=70
+            --omit="tests/*" \
+            --fail-under=80
           coverage xml \
-            --omit="tests/*,run_tests.py" \
+            --omit="tests/*" \
             -o coverage.xml
 
       - name: Upload coverage XML
@@ -68,7 +68,7 @@ jobs:
       - name: Generate HTML report
         run: |
           cd backend
-          coverage html --omit="tests/*,run_tests.py" -d htmlcov
+          coverage html --omit="tests/*" -d htmlcov
 
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
@@ -79,4 +79,4 @@ jobs:
       - name: Print coverage summary
         run: |
           cd backend
-          coverage report --omit="tests/*,run_tests.py" --show-missing
+          coverage report --omit="tests/*" --show-missing

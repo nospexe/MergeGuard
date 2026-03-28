@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, GitFork } from "lucide-react";
 
 export default function Hero() {
     return (
@@ -42,24 +42,25 @@ export default function Hero() {
 
                 {/* Subtitle */}
                 <p className="mx-auto mt-6 max-w-[480px] text-lg text-text-2">
-                    AI-powered blast radius analysis that catches dependency risks,
+                    Open-source blast radius analysis that catches dependency risks,
                     logic bombs, and architectural regressions before they hit production.
+                    Works with any GitHub repository.
                 </p>
 
                 {/* CTA Row */}
                 <div className="mt-10 flex items-center justify-center gap-4">
                     <Link href="/dashboard">
                         <Button variant="primary" size="lg">
-                            Deploy Sentinel Now
+                            Open Dashboard
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
-                    <Link href="#">
+                    <a href="https://github.com/nospexe/MergeGuard" target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="lg">
-                            <BookOpen className="h-4 w-4" />
-                            View Docs
+                            <GitFork className="h-4 w-4" />
+                            Star on GitHub
                         </Button>
-                    </Link>
+                    </a>
                 </div>
 
                 {/* Dashboard Preview */}

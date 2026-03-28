@@ -39,13 +39,15 @@ export default function Topnav() {
                     </div>
                 ) : (
                     <nav className="hidden md:flex items-center gap-8">
-                        {["Docs", "Pricing", "Changelog"].map((item) => (
+                        {[{ label: "Docs", href: "#" }, { label: "GitHub", href: "https://github.com/nospexe/MergeGuard" }, { label: "Changelog", href: "#" }].map((item) => (
                             <Link
-                                key={item}
-                                href="#"
+                                key={item.label}
+                                href={item.href}
                                 className="text-sm text-text-2 transition-colors duration-150 hover:text-text-1"
+                                target={item.href.startsWith("http") ? "_blank" : undefined}
+                                rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                             >
-                                {item}
+                                {item.label}
                             </Link>
                         ))}
                     </nav>

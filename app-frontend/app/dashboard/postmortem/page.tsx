@@ -56,12 +56,12 @@ export default function PostMortemPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                         <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-text-3 block mb-1.5">
-                            Repository Path
+                            Repository (GitHub URL or local path)
                         </label>
                         <input
                             value={repoPath}
                             onChange={(e) => setRepoPath(e.target.value)}
-                            placeholder="/path/to/your/repo"
+                            placeholder="https://github.com/owner/repo or /path/to/repo"
                             className="w-full rounded-lg border border-glass-border bg-glass px-3 py-2 text-[13px] text-text-1 placeholder:text-text-3 outline-none focus:shadow-focus transition-shadow"
                         />
                     </div>

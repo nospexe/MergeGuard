@@ -20,13 +20,19 @@ export default function Home() {
             <span className="text-[10px] text-text-3">© 2026</span>
           </div>
           <div className="flex items-center gap-6">
-            {["Privacy", "Terms", "Status", "GitHub"].map((link) => (
+            {[
+              { label: "MIT License", href: "https://github.com/nospexe/MergeGuard/blob/main/LICENSE" },
+              { label: "Docs", href: "#" },
+              { label: "GitHub", href: "https://github.com/nospexe/MergeGuard" },
+            ].map((link) => (
               <a
-                key={link}
-                href="#"
+                key={link.label}
+                href={link.href}
+                target={link.href.startsWith("http") ? "_blank" : undefined}
+                rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
                 className="text-[12px] text-text-3 hover:text-text-2 transition-colors"
               >
-                {link}
+                {link.label}
               </a>
             ))}
           </div>
