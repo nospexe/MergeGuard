@@ -18,7 +18,7 @@ from collections import Counter
 from engines.blast_radius import analyze_blast_radius, RepositoryScanner
 from engines.post_mortem import mine_association_rules
 from engines.coverage_overlay import build_coverage_overlay
-from utils.path_validator import validate_repo_path
+from utils.path_validator import validate_repo_path, resolve_repo_path
 
 load_dotenv()
 
@@ -330,25 +330,25 @@ def resolve_changed_symbols(repo_path: str, base: str, pr: str) -> list[str]:
 @app.post("/api/blast-radius", response_model=BlastRadiusResponse)
 def get_blast_radius(req: AnalyzeRequest):
 
-    is_valid, error = validate_repo_path(req.repo_path)
+    is_valid, error, resolved_path = resolve_repo_path(req.repo_path)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
     try:
         # 1. Resolve symbols
-        scanner = RepositoryScanner(req.repo_path)
+        scanner = RepositoryScanner(resolved_path)
         tables = scanner.scan()
-        symbols = resolve_changed_symbols(req.repo_path, req.base_branch, req.pr_branch)
+        symbols = resolve_changed_symbols(resolved_path, req.base_branch, req.pr_branch)
 
         # 2. Get Coverage Overlay
         uncovered_nodes = []
         overall_coverage = 0.0
         coverage_annotations = []
-        coverage_path = Path(req.repo_path) / ".coverage"
+        coverage_path = Path(resolved_path) / ".coverage"
         
         if coverage_path.exists():
             try:
-                cvm = build_coverage_overlay(coverage_path, tables, req.repo_path)
+                cvm = build_coverage_overlay(coverage_path, tables, resolved_path)
                 uncovered_nodes = cvm.uncovered_module_paths
                 overall_coverage = cvm.overall_coverage_percent
                 coverage_annotations = cvm.annotations
@@ -357,7 +357,7 @@ def get_blast_radius(req: AnalyzeRequest):
 
         # 3. Analyze Blast Radius with Coverage Data
         result = analyze_blast_radius(
-            repo_root=req.repo_path,
+            repo_root=resolved_path,
             changed_symbols=symbols, 
             uncovered_nodes=uncovered_nodes,
             use_rope=False
@@ -375,13 +375,13 @@ def get_blast_radius(req: AnalyzeRequest):
 @app.post("/api/postmortem", response_model=PostMortemResponse)
 def get_postmortem(req: AnalyzeRequest):
 
-    is_valid, error = validate_repo_path(req.repo_path)
+    is_valid, error, resolved_path = resolve_repo_path(req.repo_path)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
     try:
         rules = mine_association_rules(
-            repo_path=req.repo_path,
+            repo_path=resolved_path,
             min_support=0.02,
             min_confidence=0.5
         )
@@ -397,13 +397,13 @@ def get_postmortem(req: AnalyzeRequest):
 @app.post("/api/analyze/stream")
 async def analyze_stream(req: AnalyzeRequest):
 
-    is_valid, error = validate_repo_path(req.repo_path)
+    is_valid, error, resolved_path = resolve_repo_path(req.repo_path)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
     try:
         blast_result = analyze_blast_radius(
-            repo_root=req.repo_path,
+            repo_root=resolved_path,
             changed_symbols=[req.pr_branch],
             uncovered_nodes=[],
             use_rope=False
@@ -414,7 +414,7 @@ async def analyze_stream(req: AnalyzeRequest):
 
     try:
         postmortem_data = mine_association_rules(
-            repo_path=req.repo_path,
+            repo_path=resolved_path,
             min_support=0.02,
             min_confidence=0.5
         )
@@ -435,13 +435,13 @@ async def analyze_stream(req: AnalyzeRequest):
 @app.post("/api/recommendation", response_model=RecommendationResponse)
 def get_recommendation(req: AnalyzeRequest):
 
-    is_valid, error = validate_repo_path(req.repo_path)
+    is_valid, error, resolved_path = resolve_repo_path(req.repo_path)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
     try:
         blast_result = analyze_blast_radius(
-            repo_root=req.repo_path,
+            repo_root=resolved_path,
             changed_symbols=[req.pr_branch],
             uncovered_nodes=[],
             use_rope=False
@@ -452,7 +452,7 @@ def get_recommendation(req: AnalyzeRequest):
 
     try:
         postmortem_data = mine_association_rules(
-            repo_path=req.repo_path,
+            repo_path=resolved_path,
             min_support=0.02,
             min_confidence=0.5
         )
