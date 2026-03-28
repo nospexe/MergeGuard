@@ -308,12 +308,17 @@ class TestCoverageFileReader:
         """))
 
         cov_file = tmp_path / ".coverage"
-        cov = coverage_lib.Coverage(data_file=str(cov_file))
+        cov = coverage_lib.Coverage(
+            data_file=str(cov_file),
+            source=[str(tmp_path)],
+            include=[str(source)],
+        )
         cov.start()
         try:
-            # Execute only `covered()`, leaving `uncovered()` untouched
-            ns = {}
-            exec(compile(source.read_text(), str(source), "exec"), ns)
+            # Execute with __file__ set to source path so coverage tracks it
+            code = compile(source.read_text(), str(source), "exec")
+            ns = {"__file__": str(source), "__name__": "__main__"}
+            exec(code, ns)
             ns["covered"]()
         finally:
             cov.stop()

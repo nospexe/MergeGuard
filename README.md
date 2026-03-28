@@ -1,6 +1,8 @@
-# MergeGuard
+# MergeGuard v0.2.0
 
 **Pre-merge intelligence for engineering teams.** MergeGuard analyses pull requests before they land — surfacing blast radius, historical failure patterns, and AI-powered merge recommendations — so you know what will break before you merge.
+
+> 🔓 **Open Source** — MIT licensed. All analysis runs locally. No data leaves your machine.
 
 [![CI](https://github.com/nospexe/MergeGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/nospexe/MergeGuard/actions/workflows/ci.yml)
 [![Coverage](https://github.com/nospexe/MergeGuard/actions/workflows/coverage.yml/badge.svg)](https://github.com/nospexe/MergeGuard/actions/workflows/coverage.yml)
@@ -119,19 +121,27 @@ MergeGuard/
 ```bash
 cd backend
 PYTHONPATH=$(pwd) python -m pytest tests/ -v
+
+# With coverage
+coverage run --source=engines,agents,api,utils,db -m pytest tests/ -v
+coverage report --show-missing
 ```
 
-**136 tests** across 5 categories:
+**233 tests** across 9 test suites:
 
-| Category | Tests | What's covered |
-|----------|-------|---------------|
-| Accuracy | 22 | Response shapes, value ranges, data constraints |
-| Security | 19 | Shell injection, path traversal, CRLF, XSS headers, symlinks |
-| Efficiency | 3 | Speed benchmarks (health < 100ms, engines < 5s) |
-| Streaming | 3 | SSE content type, `[DONE]` sentinel |
-| Edge cases | 2+ | Malformed JSON, unknown endpoints |
+| Suite | Tests | What's covered |
+|-------|-------|---------------|
+| API | 39 | Health, all endpoints, validation, security headers, methods, edge cases |
+| Blast Radius | 47 | AST parser, scanner, BFS tracer, risk scorer, Rope integration |
+| Coverage Overlay | 12 | Symbol annotation, file reader, full pipeline |
+| PostMortem | 24 | Commit mining, association rules, table builder |
+| Security | 18 | Shell injection, path traversal, symlink, system dirs, URL validation |
+| Fingerprint Store | 14 | CRUD, risk tier, PR matching, summaries |
+| Path Validator | 16 | GitHub URLs, cloning, local paths, resolve |
+| LangGraph Pipeline | 12 | Prompt builders, agent fallbacks, verdict parsing |
+| Pipeline Integration | 3 | Streaming, full pipeline, error handling |
 
-Test coverage: **87%**
+Test coverage: **93%** (engines: 99%, agents: 93%, utils: 92%)
 
 ---
 

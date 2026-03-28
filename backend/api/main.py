@@ -1,13 +1,17 @@
 import logging
 import os
+import re
+import time
 from pathlib import Path
 from dataclasses import asdict
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, field_validator
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from collections import Counter
 
@@ -17,6 +21,10 @@ from engines.coverage_overlay import build_coverage_overlay
 from utils.path_validator import validate_repo_path
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+VERSION = "0.2.0"
 OLLAMA_HOST  = os.getenv("OLLAMA_HOST",  "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "deepseek-coder")
 
@@ -144,22 +152,100 @@ def translate_postmortem(rules: list[dict]) -> dict:
 
 app = FastAPI(
     title="MergeGuard API",
-    version="0.1.0",
+    version=VERSION,
     description="Pre-merge intelligence for engineering teams."
 )
 
+
+# ── Security Headers Middleware ──
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:3001"],  
-    allow_methods=["*"],                      
-    allow_headers=["*"],                     
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:3001"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
+# ── Global Exception Handlers ──
+
+DAN_CHARS_RE = re.compile(r"[;|`$\n]")
+
+
+def _make_serializable(obj):
+    """Recursively convert an object to JSON-safe primitives."""
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+        return obj
+    if isinstance(obj, dict):
+        return {str(k): _make_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_make_serializable(i) for i in obj]
+    return str(obj)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning("Validation error on %s: %s", request.url.path, str(exc))
+    safe_errors = _make_serializable(exc.errors())
+    return JSONResponse(
+        status_code=422,
+        content={"detail": safe_errors},
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
 class AnalyzeRequest(BaseModel):
-    repo_path: str        
-    base_branch: str = "main"  
-    pr_branch: str        
+    repo_path: str
+    base_branch: str = "main"
+    pr_branch: str
+
+    @field_validator("repo_path", "base_branch", "pr_branch")
+    @classmethod
+    def must_not_be_empty(cls, v: str, info) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} must not be empty")
+        return v
+
+    @field_validator("repo_path", "base_branch", "pr_branch")
+    @classmethod
+    def must_not_be_too_long(cls, v: str, info) -> str:
+        if len(v) > 500:
+            raise ValueError(f"{info.field_name} exceeds maximum length of 500 characters")
+        return v
+
+    @field_validator("repo_path")
+    @classmethod
+    def must_not_contain_dangerous_chars(cls, v: str) -> str:
+        if DAN_CHARS_RE.search(v):
+            raise ValueError("repo_path contains forbidden characters")
+        return v
+
+    @field_validator("base_branch", "pr_branch")
+    @classmethod
+    def branch_must_be_safe(cls, v: str, info) -> str:
+        if DAN_CHARS_RE.search(v):
+            raise ValueError(f"{info.field_name} contains forbidden characters")
+        return v
 
 
 # Response Models
@@ -213,7 +299,7 @@ class RecommendationResponse(BaseModel):
 def health_check():
     return {
         "status": "ok",
-        "version": "0.1.0"
+        "version": VERSION,
     }
 
 def resolve_changed_symbols(repo_path: str, base: str, pr: str) -> list[str]:

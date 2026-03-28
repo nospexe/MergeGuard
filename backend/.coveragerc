@@ -1,0 +1,15 @@
+[run]
+source = engines, agents, api, utils, db
+omit = tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__
+    def __repr__
+    raise NotImplementedError
+    pass
+    \.\.\.
+omit = tests/*
+fail_under = 80
+show_missing = true
