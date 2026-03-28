@@ -1,17 +1,8 @@
-node_modules/
-.vscode/
-__pycache__/
-*.pyc
-*.pyo
-.coverage
-*.egg-info/
-dist/
-build/
-.env
-# Bytecode
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 
 # Virtual environments
 venv/
@@ -23,47 +14,26 @@ dist/
 build/
 *.egg-info/
 
-# Coverage reports
+# Coverage
 .coverage
 coverage.xml
 htmlcov/
 
-# pytest
+# Testing
 .pytest_cache/
 
-# mypy
+# Type checking
 .mypy_cache/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Virtual environments
-.venv/
-venv/
-env/
 
 # Environment variables
 .env
-
-# Coverage
-.coverage
-htmlcov/
 
 # Database files
 *.db
 *.sqlite3
 
-# OS junk
-.DS_Store
-Thumbs.db
-
-# Build artifacts
-dist/
-build/
-*.egg-info/
+# Rope project files
+.ropeproject/
 
 # Node / frontend
 node_modules/
@@ -72,43 +42,10 @@ node_modules/
 .vscode/
 .idea/
 
-# Pytest cache
-.pytest_cache/
+# OS junk
+.DS_Store
+Thumbs.db
 
-# Rope project files
-.ropeproject/
-node_modules/
-.vscode/
-__pycache__/
-*.pyc
-*.pyo
-.coverage
-*.egg-info/
-dist/
-build/
-.env
-# Bytecode
-__pycache__/
-*.py[cod]
-*.pyo
-
-# Virtual environments
-venv/
-.venv/
-env/
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
-# Coverage reports
-.coverage
-coverage.xml
-htmlcov/
-
-# pytest
-.pytest_cache/
-
-# mypy
-.mypy_cache/
+# Temp files
+temp_diff.txt
+*.diff

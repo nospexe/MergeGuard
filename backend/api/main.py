@@ -218,38 +218,24 @@ def health_check():
 
 def resolve_changed_symbols(repo_path: str, base: str, pr: str) -> list[str]:
     """Helper to find symbols affected by changes between base and pr branches."""
-    # Special handle for demo scenarios
-    if "high_risk" in pr:
-        return ["engines.post_mortem.mine_commits", "api.main.get_blast_radius"]
-    if "medium_risk" in pr:
-        return ["utils.path_validator.validate_repo_path"]
-    if "low_risk" in pr:
-        return ["api.main.health_check"]
-
     try:
         from git import Repo
         repo = Repo(repo_path)
-        # Get list of changed Python files between base and pr
         diff = repo.git.diff(f"{base}...{pr}", "--name-only", "*.py")
         files = diff.splitlines()
         if not files:
-            return [pr]  # Fallback
-        
-        # Simplified: all symbols in changed files are considered "changed"
-        # for the purpose of a high-level blast radius report.
-        from engines.blast_radius import RepositoryScanner
+            return [pr]
+
         scanner = RepositoryScanner(repo_path)
         tables = scanner.scan()
-        
+
         affected_symbols = []
         for f in files:
-            # Map file path back to dotted module path
             f_path = Path(repo_path) / f
-            # Using repository scanner's logic for consistency
             mod_path = scanner._file_to_module_path(f_path)
             if mod_path in tables:
                 affected_symbols.extend([d.qualified_name for d in tables[mod_path].definitions])
-        
+
         return affected_symbols if affected_symbols else [pr]
     except Exception as e:
         logging.warning("Symbol resolution error: %s", e)

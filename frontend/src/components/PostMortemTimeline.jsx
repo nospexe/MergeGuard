@@ -18,7 +18,6 @@ export default function PostMortemTimeline({ data }) {
   const fingerprints = data.matches || [];
   const timeline = data.timeline || [];
 
-  // Enrich timeline with month labels
   const chartData = (timeline || []).map((entry) => {
     const d = new Date(entry.date);
     return {
@@ -27,7 +26,6 @@ export default function PostMortemTimeline({ data }) {
     };
   });
 
-  // Severity colour map
   const severityColor = (severity) => {
     switch (severity) {
       case 'critical':
@@ -43,7 +41,6 @@ export default function PostMortemTimeline({ data }) {
     }
   };
 
-  // Severity icon
   const severityIcon = (severity) => {
     switch (severity) {
       case 'critical':
@@ -59,7 +56,6 @@ export default function PostMortemTimeline({ data }) {
     }
   };
 
-  // Custom tooltip for chart
   const ChartTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const entry = payload[0]?.payload;
@@ -131,7 +127,6 @@ export default function PostMortemTimeline({ data }) {
       </div>
 
       <div className="panel__content">
-        {/* ─── Bug/Commit Timeline Chart ─── */}
         {chartData.length > 0 && (
           <div
             className="postmortem__chart"
@@ -245,7 +240,6 @@ export default function PostMortemTimeline({ data }) {
           </div>
         )}
 
-        {/* ─── Chart Legend ─── */}
         <div
           style={{
             display: 'flex',
@@ -297,7 +291,6 @@ export default function PostMortemTimeline({ data }) {
           </span>
         </div>
 
-        {/* ─── Fingerprint Cards ─── */}
         <div
           className="fingerprint-list"
           role="list"
@@ -305,43 +298,38 @@ export default function PostMortemTimeline({ data }) {
         >
           {(fingerprints || []).map((fp, index) => (
             <div
-              key={fp.id}
+              key={fp.pattern_id || index}
               className={`fingerprint-card animate-fade-in animate-row-${Math.min(index + 1, 6)}`}
               onClick={() =>
-                setExpandedCard(expandedCard === fp.id ? null : fp.id)
+                setExpandedCard(expandedCard === fp.pattern_id ? null : fp.pattern_id)
               }
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  setExpandedCard(expandedCard === fp.id ? null : fp.id);
+                  setExpandedCard(expandedCard === fp.pattern_id ? null : fp.pattern_id);
                 }
               }}
               role="listitem"
               tabIndex={0}
-              aria-expanded={expandedCard === fp.id}
-              aria-label={`${fp.name}, severity ${fp.severity}, confidence ${Math.round(fp.confidence * 100)}%`}
-              style={{
-                borderColor:
-                  expandedCard === fp.id
-                    ? severityColor(fp.severity) + '60'
-                    : undefined,
-              }}
+              aria-expanded={expandedCard === fp.pattern_id}
+              aria-label={`Pattern ${fp.pattern_id}, confidence ${Math.round(fp.confidence * 100)}%`}
             >
               <div className="fingerprint-card__header">
-                <span className="fingerprint-card__id">{fp.id}</span>
-                <span
-                  className={`fingerprint-card__severity fingerprint-card__severity--${fp.severity}`}
-                >
-                  <span aria-hidden="true">{severityIcon(fp.severity)}</span>{' '}
-                  {fp.severity}
+                <span className="fingerprint-card__id">{fp.pattern_id}</span>
+                <span className="fingerprint-card__severity fingerprint-card__severity--medium">
+                  Pattern
                 </span>
               </div>
 
-              <div className="fingerprint-card__name">{fp.name}</div>
+              <div className="fingerprint-card__name">
+                {fp.files.slice(0, 2).join(' + ')}
+                {fp.files.length > 2 ? ` +${fp.files.length - 2} more` : ''}
+              </div>
 
-              <div className="fingerprint-card__desc">{fp.description}</div>
+              <div className="fingerprint-card__desc">
+                Files changed together {fp.support} time{fp.support !== 1 ? 's' : ''} — associated with failures
+              </div>
 
-              {/* Confidence bar */}
               <div
                 className="fingerprint-card__confidence-bar"
                 role="progressbar"
@@ -354,7 +342,7 @@ export default function PostMortemTimeline({ data }) {
                   className="fingerprint-card__confidence-fill"
                   style={{
                     width: `${fp.confidence * 100}%`,
-                    background: severityColor(fp.severity),
+                    background: 'var(--severity-medium)',
                   }}
                 />
               </div>
@@ -369,19 +357,12 @@ export default function PostMortemTimeline({ data }) {
                 <span>
                   Occurrences:{' '}
                   <strong style={{ color: 'var(--text-primary)' }}>
-                    {fp.occurrences}
-                  </strong>
-                </span>
-                <span>
-                  Last:{' '}
-                  <strong style={{ color: 'var(--text-primary)' }}>
-                    {fp.lastSeen}
+                    {fp.support}
                   </strong>
                 </span>
               </div>
 
-              {/* Expanded detail */}
-              {expandedCard === fp.id && (
+              {expandedCard === fp.pattern_id && (
                 <div
                   style={{
                     marginTop: 12,
@@ -390,7 +371,6 @@ export default function PostMortemTimeline({ data }) {
                     animation: 'fadeIn 250ms ease-out',
                   }}
                 >
-                  <div className="fingerprint-card__rule">{fp.rule}</div>
                   <div
                     style={{
                       marginTop: 10,
@@ -399,7 +379,7 @@ export default function PostMortemTimeline({ data }) {
                       gap: 6,
                     }}
                   >
-                    {fp.relatedFiles.map((file) => (
+                    {fp.files.map((file) => (
                       <span
                         key={file}
                         style={{
