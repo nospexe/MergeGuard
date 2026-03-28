@@ -35,13 +35,15 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./app-frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://backend:8000
     container_name: mergeguard-frontend
     ports:
-      - "5173:5173"
+      - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped
