@@ -1,4 +1,4 @@
-# MergeGuard v0.2.0
+# MergeGuard
 
 **Pre-merge intelligence for engineering teams.** MergeGuard analyses pull requests before they land — surfacing blast radius, historical failure patterns, and AI-powered merge recommendations — so you know what will break before you merge.
 
