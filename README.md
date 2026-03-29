@@ -34,22 +34,33 @@ Paste any public GitHub repo URL directly into the dashboard — MergeGuard will
 - Git
 - [Ollama](https://ollama.ai) (optional, for LLM reasoning)
 
-### Backend
+### 1. Database & Frontend Setup (Convex + Next.js)
+
+```bash
+cd app-frontend
+npm install
+# Start the Convex development database and sync environment variables
+npx convex dev 
+```
+
+Leave this terminal open. Switch to a new terminal.
+
+```bash
+cd app-frontend
+# Start the Next.js frontend
+npm run dev
+# Frontend running at http://localhost:3000
+```
+
+### 2. Backend Setup (Python)
+
+Copy the `NEXT_PUBLIC_CONVEX_URL` from `app-frontend/.env.local` and add it to a new `backend/.env` file as `CONVEX_URL="<your-url>"`.
 
 ```bash
 cd backend
 pip install -r requirements.txt
 python -m api.main
 # API running at http://localhost:8000
-```
-
-### Frontend
-
-```bash
-cd app-frontend
-npm install
-npm run dev
-# Frontend running at http://localhost:3000
 ```
 
 Open **http://localhost:3000** → paste a GitHub URL → select branches → run analysis.
