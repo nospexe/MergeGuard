@@ -68,11 +68,9 @@ export default function Topnav() {
                             <span className="text-[12px] font-medium text-text-2 hidden sm:block">Admin</span>
                         </div>
                     ) : (
-                        <Link href="/dashboard">
-                            <Button variant="primary" size="sm">
-                                Deploy Sentinel
-                            </Button>
-                        </Link>
+                        <Button href="/dashboard" variant="primary" size="sm">
+                            Deploy Sentinel
+                        </Button>
                     )}
                 </div>
             </div>

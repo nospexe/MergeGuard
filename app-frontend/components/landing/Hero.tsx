@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import { ArrowRight, GitFork } from "lucide-react";
@@ -49,18 +49,14 @@ export default function Hero() {
 
                 {/* CTA Row */}
                 <div className="mt-10 flex items-center justify-center gap-4">
-                    <Link href="/dashboard">
-                        <Button variant="primary" size="lg">
-                            Open Dashboard
-                            <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <a href="https://github.com/nospexe/MergeGuard" target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="lg">
-                            <GitFork className="h-4 w-4" />
-                            Star on GitHub
-                        </Button>
-                    </a>
+                    <Button href="/dashboard" variant="primary" size="lg">
+                        Open Dashboard
+                        <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button href="https://github.com/nospexe/MergeGuard" variant="ghost" size="lg">
+                        <GitFork className="h-4 w-4" />
+                        Star on GitHub
+                    </Button>
                 </div>
 
                 {/* Dashboard Preview */}

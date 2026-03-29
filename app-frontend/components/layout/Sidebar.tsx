@@ -81,6 +81,7 @@ export default function Sidebar() {
                     API
                 </Link>
                 <Button
+                    href="/dashboard/blast-radius"
                     variant="primary"
                     size="sm"
                     className="w-full text-[10px] font-bold uppercase tracking-[0.12em]"
