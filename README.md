@@ -3,6 +3,7 @@
 **Pre-merge intelligence for engineering teams.** MergeGuard analyses pull requests before they land — surfacing blast radius, historical failure patterns, and AI-powered merge recommendations — so you know what will break before you merge.
 
 > 🔓 **Open Source** — MIT licensed. All analysis runs locally. No data leaves your machine.
+> 🚀 **Live Demo:** [mergeguard-frontend.vercel.app](https://mergeguard-frontend.vercel.app/)
 
 [![CI](https://github.com/nospexe/MergeGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/nospexe/MergeGuard/actions/workflows/ci.yml)
 [![Coverage](https://github.com/nospexe/MergeGuard/actions/workflows/coverage.yml/badge.svg)](https://github.com/nospexe/MergeGuard/actions/workflows/coverage.yml)
@@ -63,7 +64,7 @@ python -m api.main
 # API running at http://localhost:8000
 ```
 
-Open **http://localhost:3000** → paste a GitHub URL → select branches → run analysis.
+Open **http://localhost:3000** (or the [Live Demo](https://mergeguard-frontend.vercel.app/)) → paste a GitHub URL → select branches → run analysis.
 
 ---
 
