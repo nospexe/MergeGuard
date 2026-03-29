@@ -367,7 +367,7 @@ export default function LandingPage() {
                 Know what breaks.
               </span>
               <span className="block text-[#f8fafc]">
-                Know why it broke before.
+                Know why it breaks.
               </span>
               <span className="block text-[#00d4ff] mt-1">
                 Before you merge.
