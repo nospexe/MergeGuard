@@ -6,6 +6,7 @@ const config: Config = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   darkMode: "class",
   theme: {
@@ -21,6 +22,11 @@ const config: Config = {
           DEFAULT: "var(--glass)",
           border: "var(--glass-border)",
           hover: "var(--glass-hover)",
+        },
+        cyan: {
+          DEFAULT: "var(--cyan)",
+          dim: "var(--cyan-dim)",
+          border: "var(--cyan-border)",
         },
         blue: {
           DEFAULT: "var(--blue)",
@@ -95,6 +101,38 @@ const config: Config = {
       },
       boxShadow: {
         focus: "var(--focus-ring)",
+        glow: "0 0 20px rgba(0, 212, 255, 0.2)",
+        "glow-green": "0 0 20px rgba(0, 255, 136, 0.2)",
+        "glow-red": "0 0 20px rgba(255, 68, 68, 0.2)",
+      },
+      animation: {
+        "fade-in": "fade-in 0.3s ease-out",
+        blink: "blink 1s step-end infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        float: "float 3s ease-in-out infinite",
+        "slide-up": "slide-up 0.5s ease-out",
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        blink: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 4px rgba(0, 212, 255, 0.2)" },
+          "50%": { boxShadow: "0 0 16px rgba(0, 212, 255, 0.4)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
     },
   },

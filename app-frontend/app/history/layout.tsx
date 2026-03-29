@@ -1,7 +1,7 @@
 import Topnav from "@/components/layout/Topnav";
 import Sidebar from "@/components/layout/Sidebar";
 
-export default function DashboardLayout({
+export default function HistoryLayout({
   children,
 }: {
   children: React.ReactNode;

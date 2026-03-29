@@ -1,7 +1,7 @@
 import Topnav from "@/components/layout/Topnav";
 import Sidebar from "@/components/layout/Sidebar";
 
-export default function DashboardLayout({
+export default function AnalyzeLayout({
   children,
 }: {
   children: React.ReactNode;

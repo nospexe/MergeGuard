@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
+import ConvexClientProvider from "@/lib/convex-provider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -17,9 +18,15 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MergeGuard — AI-Powered PR Risk Analysis",
+  title: "MergeGuard — Pre-Merge Intelligence for Engineering Teams",
   description:
-    "Analyze pull requests for dependency risks, logic bombs, and architectural regressions before merging. Symbol-level blast radius analysis powered by local LLM.",
+    "Open-source blast radius analysis and historical failure pattern mining. Know what breaks before you merge. Built for FOSS Hack 2026.",
+  openGraph: {
+    title: "MergeGuard — Pre-Merge Intelligence",
+    description:
+      "Catch dependency risks, logic bombs, and architectural regressions before they hit production.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -29,10 +36,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <meta name="theme-color" content="#0a0b0d" />
+      </head>
       <body
         className={`${dmSans.variable} ${dmMono.variable} font-sans antialiased`}
       >
-        {children}
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );
