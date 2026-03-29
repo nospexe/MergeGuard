@@ -69,7 +69,7 @@ MergeGuard/
 │   ├── agents/
 │   │   └── langgraph_pipeline.py # LLM reasoning pipeline (Ollama)
 │   ├── db/
-│   │   └── fingerprint_store.py  # SQLite fingerprint persistence
+│   │   └── fingerprint_store.py  # Convex fingerprint persistence
 │   └── utils/
 │       └── path_validator.py     # GitHub URL cloning + path security
 ├── app-frontend/                 # Next.js 14 (App Router) + Tailwind
@@ -154,6 +154,8 @@ Test coverage: **93%** (engines: 99%, agents: 93%, utils: 92%)
 | `ALLOWED_ORIGINS` | `http://localhost:3000,...` | CORS allowed origins |
 | `MERGEGUARD_ENV` | — | Set to `production` to disable `/docs` |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend URL for frontend |
+| `CONVEX_URL` | — | Convex deployment URL for Python backend (from `npx convex dev`) |
+| `NEXT_PUBLIC_CONVEX_URL` | — | Convex deployment URL for frontend (from `npx convex dev`) |
 
 ---
 

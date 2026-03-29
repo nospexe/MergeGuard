@@ -1,3 +1,7 @@
+# CD — Backend Docker Image
+# Builds and pushes the backend Docker image to GitHub Container Registry.
+# Note: Frontend is deployed via Vercel (see app-frontend/vercel.json).
+# This workflow only publishes the backend image to GHCR.
 name: CD
 
 on:

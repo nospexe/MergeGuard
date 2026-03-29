@@ -3,6 +3,8 @@ from db.convex_client import client
 
 def get_all_fingerprints(repo_path: str = None) -> list[dict]:
     """Retrieve all fingerprints, optionally filtered by repo, from Convex."""
+    if client is None:
+        return []  # Graceful no-op when Convex not configured
     if repo_path:
         fingerprints = client.query("fingerprints:list", {"repoPath": repo_path})
     else:
@@ -26,6 +28,8 @@ def get_all_fingerprints(repo_path: str = None) -> list[dict]:
 
 def save_fingerprints(rules: list[dict], repo_path: str):
     """Save a list of association rules to the Convex database."""
+    if client is None:
+        return  # Graceful no-op when Convex not configured
     for rule in rules:
         antecedents_str = json.dumps(rule.get("antecedents", []))
         pattern_id = f"pattern-{hash(f'{repo_path}-{antecedents_str}')}"
