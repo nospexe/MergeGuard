@@ -2,8 +2,14 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { repoPath: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (args.repoPath) {
+      return await ctx.db
+        .query("fingerprints")
+        .withIndex("by_repo", (q) => q.eq("repoPath", args.repoPath!))
+        .collect();
+    }
     return await ctx.db.query("fingerprints").collect();
   },
 });
@@ -21,9 +27,13 @@ export const getByPattern = query({
 export const create = mutation({
   args: {
     patternId: v.string(),
+    repoPath: v.string(),
     filesInvolved: v.array(v.string()),
+    antecedents: v.array(v.string()),
+    consequents: v.array(v.string()),
     support: v.number(),
     confidence: v.number(),
+    lift: v.number(),
     evidenceCommits: v.array(v.string()),
     timestampRange: v.object({
       start: v.number(),

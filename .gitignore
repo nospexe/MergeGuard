@@ -49,3 +49,4 @@ Thumbs.db
 # Temp files
 temp_diff.txt
 *.diff
+.env.local

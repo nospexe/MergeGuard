@@ -25,15 +25,20 @@ export default defineSchema({
 
   fingerprints: defineTable({
     patternId: v.string(),
+    repoPath: v.string(),
     filesInvolved: v.array(v.string()),
+    antecedents: v.array(v.string()),
+    consequents: v.array(v.string()),
     support: v.number(),
     confidence: v.number(),
+    lift: v.number(),
     evidenceCommits: v.array(v.string()),
     timestampRange: v.object({
       start: v.number(),
       end: v.number(),
     }),
-  }).index("by_pattern", ["patternId"]),
+  }).index("by_pattern", ["patternId"])
+    .index("by_repo", ["repoPath"]),
 
   // Streaming LLM output — each analysis gets tokens appended in real-time
   llmStreams: defineTable({

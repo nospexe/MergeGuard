@@ -1,87 +1,46 @@
-import sqlite3
 import json
-from pathlib import Path
+from db.convex_client import client
 
-
-DB_PATH = Path(__file__).parent / "fingerprints.db"
-
-
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    """Create the fingerprints table if it doesn't exist."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.executescript("""
-        CREATE TABLE IF NOT EXISTS fingerprints (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            antecedents TEXT NOT NULL,
-            consequents TEXT NOT NULL,
-            support REAL NOT NULL,
-            confidence REAL NOT NULL,
-            lift REAL NOT NULL,
-            repo_path TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-    conn.commit()
-    conn.close()
+def get_all_fingerprints(repo_path: str = None) -> list[dict]:
+    """Retrieve all fingerprints, optionally filtered by repo, from Convex."""
+    if repo_path:
+        fingerprints = client.query("fingerprints:list", {"repoPath": repo_path})
+    else:
+        fingerprints = client.query("fingerprints:list")
+    
+    # Map back to the expected Python dict format for the engine
+    return [
+        {
+            "id": fp["_id"],
+            "antecedents": fp.get("antecedents", []),
+            "consequents": fp.get("consequents", []),
+            "support": fp["support"],
+            "confidence": fp["confidence"],
+            "lift": fp.get("lift", 0.0), # Lift is optional right now
+            "repo_path": fp.get("repoPath", repo_path),
+            "created_at": fp["_creationTime"],
+        }
+        for fp in fingerprints
+    ]
 
 
 def save_fingerprints(rules: list[dict], repo_path: str):
-    """Save a list of association rules to the database."""
-    init_db()
-    conn = get_connection()
-    cursor = conn.cursor()
-
+    """Save a list of association rules to the Convex database."""
     for rule in rules:
-        cursor.execute("""
-            INSERT INTO fingerprints (antecedents, consequents, support, confidence, lift, repo_path)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            json.dumps(rule["antecedents"]),
-            json.dumps(rule["consequents"]),
-            rule["support"],
-            rule["confidence"],
-            rule["lift"],
-            repo_path,
-        ))
-
-    conn.commit()
-    conn.close()
-
-
-def get_all_fingerprints(repo_path: str = None) -> list[dict]:
-    """Retrieve all fingerprints, optionally filtered by repo."""
-    init_db()
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    if repo_path:
-        cursor.execute("SELECT * FROM fingerprints WHERE repo_path = ?", (repo_path,))
-    else:
-        cursor.execute("SELECT * FROM fingerprints")
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [
-        {
-            "id": row["id"],
-            "antecedents": json.loads(row["antecedents"]),
-            "consequents": json.loads(row["consequents"]),
-            "support": row["support"],
-            "confidence": row["confidence"],
-            "lift": row["lift"],
-            "repo_path": row["repo_path"],
-            "created_at": row["created_at"],
-        }
-        for row in rows
-    ]
+        antecedents_str = json.dumps(rule.get("antecedents", []))
+        pattern_id = f"pattern-{hash(f'{repo_path}-{antecedents_str}')}"
+        client.mutation("fingerprints:create", {
+            "patternId": rule.get("patternId", pattern_id),
+            "repoPath": repo_path or "unknown",
+            "filesInvolved": rule.get("antecedents", []) + rule.get("consequents", []),
+            "antecedents": rule.get("antecedents", []),
+            "consequents": rule.get("consequents", []),
+            "support": rule.get("support", 0.0),
+            "confidence": rule.get("confidence", 0.0),
+            "lift": rule.get("lift", 0.0),
+            "evidenceCommits": [],
+            "timestampRange": {"start": 0, "end": 0}
+        })
 
 
 def match_pr(changed_files: list[str], repo_path: str = None) -> dict:
@@ -116,7 +75,9 @@ def _calculate_risk_tier(matched: list[dict]) -> str:
         return "LOW"
 
     max_confidence = max(fp["confidence"] for fp in matched)
-    max_lift = max(fp["lift"] for fp in matched)
+    
+    # Lift isn't standard in Convex right now but handling gracefully
+    max_lift = max(fp.get("lift", 0) for fp in matched)
 
     if max_confidence >= 0.8 or max_lift >= 3.0:
         return "HIGH"
@@ -139,24 +100,3 @@ def _generate_summary(matched: list[dict], risk_tier: str) -> str:
         f"Top match shows these files have caused issues together "
         f"{confidence_pct}% of the time. Risk level: {risk_tier}."
     )
-
-
-if __name__ == "__main__":
-    init_db()
-    print("DB initialised at:", DB_PATH)
-
-    sample_rules = [
-        {
-            "antecedents": ["backend/api/main.py"],
-            "consequents": ["backend/engines/post_mortem.py"],
-            "support": 0.15,
-            "confidence": 0.75,
-            "lift": 2.5,
-        }
-    ]
-
-    save_fingerprints(sample_rules, "./demo/repos/django")
-    print("Saved sample fingerprints.")
-
-    result = match_pr(["backend/api/main.py"], "./demo/repos/django")
-    print(json.dumps(result, indent=2))

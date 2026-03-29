@@ -1,36 +1,34 @@
-"""Tests for db/fingerprint_store.py — covers init, save, retrieve, match, and risk assessment."""
-import json
-import sqlite3
-from pathlib import Path
-from unittest.mock import patch
-
+"""Tests for db/fingerprint_store.py — covers save, retrieve, match, and risk assessment using Convex."""
 import pytest
 
 from db import fingerprint_store as fs
 
+class MockConvexClient:
+    def __init__(self):
+        self.data = []
+        self.next_id = 1
+
+    def query(self, route: str, args: dict = None):
+        if route == "fingerprints:list":
+            if args and "repoPath" in args:
+                return [d for d in self.data if d.get("repoPath") == args["repoPath"]]
+            return self.data
+        return []
+
+    def mutation(self, route: str, args: dict):
+        if route == "fingerprints:create":
+            args["_id"] = f"mock-id-{self.next_id}"
+            args["_creationTime"] = 123456789.0
+            self.next_id += 1
+            self.data.append(args)
+
+mock_client = MockConvexClient()
 
 @pytest.fixture(autouse=True)
-def use_tmp_db(tmp_path, monkeypatch):
-    """Point fingerprint_store.DB_PATH at a temp file so tests are isolated."""
-    monkeypatch.setattr(fs, "DB_PATH", tmp_path / "test_fingerprints.db")
-
-
-# ── init_db ──
-
-def test_init_creates_table():
-    fs.init_db()
-    conn = sqlite3.connect(fs.DB_PATH)
-    cursor = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='fingerprints';"
-    )
-    assert cursor.fetchone() is not None
-    conn.close()
-
-
-def test_init_idempotent():
-    """Calling init_db twice should not raise."""
-    fs.init_db()
-    fs.init_db()
+def mock_convex(monkeypatch):
+    """Replace the real convex client with our mock."""
+    mock_client.data = []
+    monkeypatch.setattr(fs, "client", mock_client)
 
 
 # ── save_fingerprints ──
