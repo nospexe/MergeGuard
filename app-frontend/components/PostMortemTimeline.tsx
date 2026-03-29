@@ -46,7 +46,7 @@ export default function PostMortemTimeline({ data }: PostMortemTimelineProps) {
       const activePayload = payload.activePayload as Array<{
         payload: TimelineEvent;
       }> | undefined;
-      if (activePayload && activePayload.length > 0) {
+      if (activePayload && activePayload.length > 0 && activePayload[0]?.payload) {
         const event = activePayload[0].payload;
         setModalData({
           date: event.date,

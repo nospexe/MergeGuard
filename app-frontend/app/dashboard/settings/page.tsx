@@ -53,12 +53,16 @@ export default function SettingsPage() {
 
     // Check backend health on mount
     useEffect(() => {
-        healthCheck()
-            .then((res) => {
-                setBackendStatus("connected");
-                setBackendVersion(res.version || "");
-            })
-            .catch(() => setBackendStatus("disconnected"));
+    let cancelled = false;
+    healthCheck()
+        .then((res) => {
+        if (!cancelled) {
+            setBackendStatus("connected");
+            setBackendVersion(res.version || "");
+        }
+        })
+        .catch(() => { if (!cancelled) setBackendStatus("disconnected"); });
+    return () => { cancelled = true; };
     }, []);
 
     const update = useCallback((field: keyof SettingsState, value: string) => {

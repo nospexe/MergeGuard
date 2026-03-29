@@ -277,11 +277,7 @@ export default function BlastRadiusGraph({
     // Pulse animation for ring 0
     nodeElements
       .filter((d) => d.ring === 0)
-      .append("animate")
-      .attr("attributeName", "r")
-      .attr("values", "10;13;10")
-      .attr("dur", "2s")
-      .attr("repeatCount", "indefinite");
+      .attr("class", "node-circle ring-zero-pulse");
 
     return () => {
       simulation.stop();

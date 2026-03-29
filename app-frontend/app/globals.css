@@ -176,6 +176,14 @@ body {
   }
 }
 
+@keyframes ring-zero-pulse {
+  0%, 100% { r: 10; }
+  50% { r: 13; }
+}
+.ring-zero-pulse {
+  animation: ring-zero-pulse 2s ease-in-out infinite;
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
