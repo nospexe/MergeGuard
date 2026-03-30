@@ -216,17 +216,20 @@ async function streamLLMCall(
   prompt: string,
   onToken: (token: string) => void
 ): Promise<string> {
-  const response = await fetch("http://localhost:8000/api/llm/stream", {
+  // Use the correct backend endpoint — /api/analyze/stream (not /api/llm/stream)
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+  const response = await fetch(`${backendUrl}/api/analyze/stream`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "deepseek-coder",
-      max_tokens: 1024,
-      stream: true,
-      messages: [{ role: "user", content: prompt }],
+      repo_path: prompt, // the prompt is actually the repo context
+      pr_branch: "HEAD",
+      base_branch: "main",
     }),
   });
 
@@ -253,15 +256,14 @@ async function streamLLMCall(
       if (line.startsWith("data: ")) {
         const data = line.slice(6);
         if (data === "[DONE]") continue;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.type === "content_block_delta" && parsed.delta?.text) {
-            onToken(parsed.delta.text);
-            fullText += parsed.delta.text;
-          }
-        } catch {
-          // Skip unparseable lines
-        }
+
+        // Backend emits plain-text SSE tokens (Ollama format),
+        // NOT Anthropic-style JSON (content_block_delta).
+        // Skip phase markers like [Agent 1], [Agent 2 complete] etc.
+        if (data.startsWith("[") && data.endsWith("]")) continue;
+
+        onToken(data);
+        fullText += data;
       }
     }
   }

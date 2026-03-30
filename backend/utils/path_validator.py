@@ -71,10 +71,23 @@ def clone_github_repo(url: str) -> tuple[bool, str, str]:
 def validate_repo_path(repo_path: str) -> tuple[bool, str]:
     """Validate that the given path is a valid Git repository.
 
-    Blocks path traversal and symlink attacks.
+    Blocks path traversal, symlink attacks, null bytes, and
+    various OS-specific evasion techniques.
     """
-    # Block path traversal attempts
-    if ".." in repo_path or repo_path.startswith("~"):
+    # Normalise whitespace
+    repo_path = repo_path.strip()
+
+    # Block null bytes — can confuse C-based path resolution
+    if "\x00" in repo_path:
+        return False, "Path contains null bytes"
+
+    # Block URL-encoded traversal (%2e = '.', %2f = '/', %5c = '\\')
+    normalised_for_check = repo_path.replace("%2e", ".").replace("%2E", ".")
+    normalised_for_check = normalised_for_check.replace("%2f", "/").replace("%2F", "/")
+    normalised_for_check = normalised_for_check.replace("%5c", "\\").replace("%5C", "\\")
+
+    # Block path traversal — Unix (..) and Windows (..\)
+    if ".." in normalised_for_check or repo_path.startswith("~"):
         return False, "Path traversal not allowed"
 
     path = Path(repo_path)
@@ -89,11 +102,16 @@ def validate_repo_path(repo_path: str) -> tuple[bool, str]:
     if not path.is_dir():
         return False, f"Path is not a directory: '{repo_path}'"
 
-    # Block access to sensitive system directories
+    # Block access to sensitive system directories (Unix + Windows)
     resolved = path.resolve()
-    blocked = [Path("/etc"), Path("/var"), Path("/usr"), Path("/root"), Path("/sys")]
-    for b in blocked:
-        if str(resolved).startswith(str(b)):
+    resolved_str = str(resolved)
+    blocked_unix = [Path("/etc"), Path("/var"), Path("/usr"), Path("/root"), Path("/sys")]
+    blocked_win  = ["C:\\Windows", "C:\\Program Files", "C:\\Program Files (x86)"]
+    for b in blocked_unix:
+        if resolved_str.startswith(str(b)):
+            return False, f"Access to system directory not allowed: '{repo_path}'"
+    for b in blocked_win:
+        if resolved_str.lower().startswith(b.lower()):
             return False, f"Access to system directory not allowed: '{repo_path}'"
 
     try:

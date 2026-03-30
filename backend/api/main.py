@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import re
@@ -181,7 +182,7 @@ app.add_middleware(
 
 # ── Global Exception Handlers ──
 
-DAN_CHARS_RE = re.compile(r"[;|`$\n]")
+DAN_CHARS_RE = re.compile(r"[;|`$\n\r\t\x00]")
 
 
 def _make_serializable(obj):
@@ -401,22 +402,26 @@ async def analyze_stream(req: AnalyzeRequest):
     if not is_valid:
         raise HTTPException(status_code=400, detail=error)
 
+    # Run synchronous, CPU/IO-heavy engine calls in a thread pool
+    # to avoid blocking the async event loop (uvicorn).
     try:
-        blast_result = analyze_blast_radius(
+        blast_result = await asyncio.to_thread(
+            analyze_blast_radius,
             repo_root=resolved_path,
             changed_symbols=[req.pr_branch],
             uncovered_nodes=[],
-            use_rope=False
+            use_rope=False,
         )
         blast_data = asdict(blast_result)
     except Exception as e:
         blast_data = {"error": str(e), "risk_tier": "MEDIUM"}
 
     try:
-        postmortem_data = mine_association_rules(
+        postmortem_data = await asyncio.to_thread(
+            mine_association_rules,
             repo_path=resolved_path,
             min_support=0.02,
-            min_confidence=0.5
+            min_confidence=0.5,
         )
     except Exception:
         postmortem_data = []

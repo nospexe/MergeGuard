@@ -1,10 +1,14 @@
 import json
+import logging
 from db.convex_client import client
+
+logger = logging.getLogger(__name__)
 
 def get_all_fingerprints(repo_path: str = None) -> list[dict]:
     """Retrieve all fingerprints, optionally filtered by repo, from Convex."""
     if client is None:
-        return []  # Graceful no-op when Convex not configured
+        logger.warning("Convex client not configured — fingerprint queries will return empty")
+        return []
     if repo_path:
         fingerprints = client.query("fingerprints:list", {"repoPath": repo_path})
     else:
@@ -27,24 +31,45 @@ def get_all_fingerprints(repo_path: str = None) -> list[dict]:
 
 
 def save_fingerprints(rules: list[dict], repo_path: str):
-    """Save a list of association rules to the Convex database."""
+    """Save a list of association rules to the Convex database.
+
+    Raises ValueError if repo_path is None or empty.
+    """
+    if not repo_path:
+        raise ValueError(
+            "repo_path is required for saving fingerprints — "
+            "cannot store rules without a known repository path"
+        )
+
     if client is None:
-        return  # Graceful no-op when Convex not configured
+        logger.warning(
+            "Convex client not configured — %d fingerprints will NOT be persisted for %s",
+            len(rules), repo_path,
+        )
+        return
+
+    saved = 0
     for rule in rules:
         antecedents_str = json.dumps(rule.get("antecedents", []))
         pattern_id = f"pattern-{hash(f'{repo_path}-{antecedents_str}')}"
-        client.mutation("fingerprints:create", {
-            "patternId": rule.get("patternId", pattern_id),
-            "repoPath": repo_path or "unknown",
-            "filesInvolved": rule.get("antecedents", []) + rule.get("consequents", []),
-            "antecedents": rule.get("antecedents", []),
-            "consequents": rule.get("consequents", []),
-            "support": rule.get("support", 0.0),
-            "confidence": rule.get("confidence", 0.0),
-            "lift": rule.get("lift", 0.0),
-            "evidenceCommits": [],
-            "timestampRange": {"start": 0, "end": 0}
-        })
+        try:
+            client.mutation("fingerprints:create", {
+                "patternId": rule.get("patternId", pattern_id),
+                "repoPath": repo_path,
+                "filesInvolved": rule.get("antecedents", []) + rule.get("consequents", []),
+                "antecedents": rule.get("antecedents", []),
+                "consequents": rule.get("consequents", []),
+                "support": rule.get("support", 0.0),
+                "confidence": rule.get("confidence", 0.0),
+                "lift": rule.get("lift", 0.0),
+                "evidenceCommits": [],
+                "timestampRange": {"start": 0, "end": 0}
+            })
+            saved += 1
+        except Exception as exc:
+            logger.error("Failed to save fingerprint %s: %s", pattern_id, exc)
+
+    logger.info("Saved %d/%d fingerprints for %s", saved, len(rules), repo_path)
 
 
 def match_pr(changed_files: list[str], repo_path: str = None) -> dict:

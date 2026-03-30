@@ -54,15 +54,30 @@ export default function SettingsPage() {
     // Check backend health on mount
     useEffect(() => {
     let cancelled = false;
+    const timeout = setTimeout(() => {
+        // Safety net: if health check hasn't resolved in 10s,
+        // mark as disconnected so status never stays "checking" forever.
+        if (!cancelled) setBackendStatus("disconnected");
+    }, 10_000);
+
     healthCheck()
         .then((res) => {
         if (!cancelled) {
+            clearTimeout(timeout);
             setBackendStatus("connected");
             setBackendVersion(res.version || "");
         }
         })
-        .catch(() => { if (!cancelled) setBackendStatus("disconnected"); });
-    return () => { cancelled = true; };
+        .catch(() => {
+        if (!cancelled) {
+            clearTimeout(timeout);
+            setBackendStatus("disconnected");
+        }
+        });
+    return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+    };
     }, []);
 
     const update = useCallback((field: keyof SettingsState, value: string) => {

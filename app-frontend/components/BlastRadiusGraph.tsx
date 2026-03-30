@@ -51,6 +51,7 @@ export default function BlastRadiusGraph({
     node: SimNode;
   } | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const selectedNodeRef = useRef<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: propWidth || 500, height: propHeight || 500 });
 
   // Responsive sizing
@@ -82,6 +83,7 @@ export default function BlastRadiusGraph({
       }
 
       setSelectedNode(nodeId);
+      selectedNodeRef.current = nodeId;
 
       // Find connected nodes
       const connected = new Set<string>([nodeId]);
@@ -231,11 +233,11 @@ export default function BlastRadiusGraph({
         d3.select(this).attr("r", (d as SimNode).ring === 0 ? 10 : 7);
       })
       .on("click", (_, d) => {
-        highlightPath(selectedNode === d.id ? null : d.id);
+        highlightPath(selectedNodeRef.current === d.id ? null : d.id);
       })
       .on("keydown", (event, d) => {
         if (event.key === "Enter" || event.key === " ") {
-          highlightPath(selectedNode === d.id ? null : d.id);
+          highlightPath(selectedNodeRef.current === d.id ? null : d.id);
         }
       });
 
@@ -281,8 +283,10 @@ export default function BlastRadiusGraph({
 
     return () => {
       simulation.stop();
+      // Remove event listeners to prevent leaks in React StrictMode
+      nodeElements.on("mouseover", null).on("mouseout", null).on("click", null).on("keydown", null);
     };
-  }, [data, dimensions, highlightPath, selectedNode]);
+  }, [data, dimensions, highlightPath]);  // removed selectedNode to prevent full restart on click
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[300px]">

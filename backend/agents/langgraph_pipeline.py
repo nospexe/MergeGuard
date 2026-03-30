@@ -19,9 +19,11 @@ HOW TO USE
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 from typing import AsyncGenerator, Optional, TypedDict
 
@@ -72,12 +74,28 @@ class RecommendationResult:
     action:       str   
 
 
+# ---------------------------------------------------------------------------
+# Symbol name sanitisation — defends against prompt injection via repo content
+# ---------------------------------------------------------------------------
+
+_SAFE_SYMBOL_RE = re.compile(r"[^a-zA-Z0-9_.\-/]")  # allow typical path chars
+
+def _sanitize_symbol(name: str) -> str:
+    """Strip characters that could be used for prompt injection in symbol names."""
+    # Collapse anything that isn't a safe identifier character
+    return _SAFE_SYMBOL_RE.sub("_", name)[:200]
+
+def _sanitize_symbol_list(symbols: list) -> list[str]:
+    """Sanitise a list of symbol names."""
+    return [_sanitize_symbol(s) for s in symbols]
+
+
 def _build_blast_prompt(blast_data: dict) -> str:
     risk_score = blast_data.get("risk_score", "unknown")
     risk_tier  = blast_data.get("risk_tier",  "unknown")
-    direct     = blast_data.get("direct_dependents",     [])
-    transitive = blast_data.get("transitive_dependents", [])
-    uncovered  = blast_data.get("uncovered_nodes",       [])
+    direct     = _sanitize_symbol_list(blast_data.get("direct_dependents",     []))
+    transitive = _sanitize_symbol_list(blast_data.get("transitive_dependents", []))
+    uncovered  = _sanitize_symbol_list(blast_data.get("uncovered_nodes",       []))
     warnings   = blast_data.get("dynamic_import_warnings", [])
 
     return f"""You are a static analysis expert reviewing a pull request.
@@ -167,20 +185,21 @@ Rules:
 - Do NOT add any text outside the format above."""
 
 
-def blast_interpreter_agent(state: PipelineState) -> dict:
+async def blast_interpreter_agent_async(state: PipelineState) -> dict:
     """
-    Agent 1 — Blast Radius Interpreter.
+    Agent 1 — Blast Radius Interpreter (async).
 
     Reads blast_data from state.
     Writes structural_risk to state.
+    Uses ollama.AsyncClient to avoid blocking the event loop.
     """
     logger.info("Agent 1 — Blast Interpreter running")
 
     prompt = _build_blast_prompt(state["blast_data"])
 
     try:
-        client   = ollama.Client(host=OLLAMA_HOST)
-        response = client.chat(
+        client   = ollama.AsyncClient(host=OLLAMA_HOST)
+        response = await client.chat(
             model=OLLAMA_MODEL,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -196,20 +215,28 @@ def blast_interpreter_agent(state: PipelineState) -> dict:
     return {"structural_risk": structural_risk}
 
 
-def pattern_explainer_agent(state: PipelineState) -> dict:
+def blast_interpreter_agent(state: PipelineState) -> dict:
+    """Sync wrapper for Agent 1 — used by the LangGraph pipeline."""
+    return asyncio.get_event_loop().run_until_complete(
+        blast_interpreter_agent_async(state)
+    )
+
+
+async def pattern_explainer_agent_async(state: PipelineState) -> dict:
     """
-    Agent 2 — Pattern Explainer.
+    Agent 2 — Pattern Explainer (async).
 
     Reads postmortem_data from state.
     Writes historical_risk to state.
+    Uses ollama.AsyncClient to avoid blocking the event loop.
     """
     logger.info("Agent 2 — Pattern Explainer running")
 
     prompt = _build_pattern_prompt(state["postmortem_data"])
 
     try:
-        client   = ollama.Client(host=OLLAMA_HOST)
-        response = client.chat(
+        client   = ollama.AsyncClient(host=OLLAMA_HOST)
+        response = await client.chat(
             model=OLLAMA_MODEL,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -223,6 +250,13 @@ def pattern_explainer_agent(state: PipelineState) -> dict:
 
     logger.info("Agent 2 complete — historical_risk: %s", historical_risk[:80])
     return {"historical_risk": historical_risk}
+
+
+def pattern_explainer_agent(state: PipelineState) -> dict:
+    """Sync wrapper for Agent 2 — used by the LangGraph pipeline."""
+    return asyncio.get_event_loop().run_until_complete(
+        pattern_explainer_agent_async(state)
+    )
 
 
 def orchestrator_agent(state: PipelineState) -> dict:
@@ -323,7 +357,8 @@ def run_pipeline(
     Run the full 3-agent pipeline synchronously.
 
     Called by POST /api/recommendation in main.py.
-    Replaces the inline single-prompt approach with the 3-agent pipeline.
+    This runs in a thread pool (FastAPI sync routes use run_in_executor),
+    so blocking here is safe.
 
     Parameters
     ----------
@@ -378,11 +413,11 @@ async def run_pipeline_stream(
     """
     logger.info("Starting LangGraph pipeline (streaming)")
 
-    # --- Agent 1: Blast Interpreter (synchronous) ---
+    # --- Agent 1: Blast Interpreter (async — does NOT block event loop) ---
     yield "data: [Agent 1] Analysing blast radius...\n\n"
 
     try:
-        agent1_result = blast_interpreter_agent({
+        agent1_result = await blast_interpreter_agent_async({
             "blast_data":      blast_data,
             "postmortem_data": postmortem_data,
             "structural_risk": None,
@@ -397,11 +432,11 @@ async def run_pipeline_stream(
 
     yield "data: [Agent 1 complete]\n\n"
 
-    # --- Agent 2: Pattern Explainer (synchronous) ---
+    # --- Agent 2: Pattern Explainer (async — does NOT block event loop) ---
     yield "data: [Agent 2] Analysing historical patterns...\n\n"
 
     try:
-        agent2_result = pattern_explainer_agent({
+        agent2_result = await pattern_explainer_agent_async({
             "blast_data":      blast_data,
             "postmortem_data": postmortem_data,
             "structural_risk": structural_risk,
