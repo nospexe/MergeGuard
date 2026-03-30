@@ -50,3 +50,4 @@ Thumbs.db
 temp_diff.txt
 *.diff
 .env.local
+backend/venv/

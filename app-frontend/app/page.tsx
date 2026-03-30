@@ -719,7 +719,7 @@ export default function LandingPage() {
               "FastAPI",
               "Next.js 14",
               "Convex",
-              "Claude claude-sonnet-4-20250514",
+              "Ollama (DeepSeek)",
               "Recharts",
               "Tailwind CSS",
               "TypeScript",
