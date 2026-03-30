@@ -55,7 +55,7 @@
 │  │  Features:                 │     │  Agent 3: Orchestrator     │  │
 │  │  • Real-time subscriptions │     │    → GREEN/YELLOW/RED      │  │
 │  │  • Type-safe queries       │     │                            │  │
-│  │  • Auth with sessions      │     │  Model: Claude claude-sonnet-4-20250514     │  │
+│  │  • Auth with sessions      │     │  Model: Ollama (deepseek-coder)             │  │
 │  └────────────────────────────┘     │  Streaming: token-by-token │  │
 │                                      └────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
@@ -81,11 +81,11 @@ npx convex dev          # Start Convex dev server
 npx convex run seed:seedDatabase   # Seed demo data
 ```
 
-### With Anthropic API (optional)
+### With Local Ollama Backend (optional)
 
-Add your API key to `.env.local`:
-```
-NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-...
+Ensure the Python backend is running the `langgraph_pipeline`:
+```bash
+OLLAMA_HOST=http://localhost:11434 OLLAMA_MODEL=deepseek-coder python backend/api/main.py
 ```
 
 ## Tech Stack
@@ -96,7 +96,7 @@ NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-...
 | **Visualizations** | D3.js v7 (blast radius graph), Recharts (timeline) |
 | **Database** | Convex (real-time, typed, serverless) |
 | **Auth** | Convex Auth (email/password, remember me) |
-| **LLM** | Anthropic Claude claude-sonnet-4-20250514 via API |
+| **LLM** | Ollama (deepseek-coder) via LangGraph |
 | **Deployment** | Vercel (frontend) + Convex Cloud |
 | **License** | MIT |
 
@@ -165,7 +165,7 @@ app-frontend/
 │   ├── llmStreams.ts          # Real-time streaming
 │   └── seed.ts               # Demo data seeder
 ├── lib/
-│   ├── llm-pipeline.ts       # 3-agent Anthropic pipeline
+│   ├── llm-pipeline.ts       # 3-agent local pipeline logic
 │   ├── demo-data.ts          # Precomputed scenarios
 │   ├── convex-provider.tsx   # Convex React provider
 │   ├── types.ts              # TypeScript types
@@ -196,7 +196,7 @@ app-frontend/
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_CONVEX_URL` | No | Convex deployment URL |
-| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | No | Anthropic API key for live LLM |
+| `NEXT_PUBLIC_BACKEND_URL` | No | URL to local backend API |
 
 The app works fully in **demo mode** without any environment variables configured.
 

@@ -8,7 +8,7 @@ and contributor understanding.
 
 ## Permitted AI Usage
 
-- Using AI assistants (Claude, Copilot, etc.) to generate boilerplate
+- Using AI assistants (Ollama, local models, Copilot, etc.) to generate boilerplate
 - Using AI to suggest implementations that contributors then review
 - Using AI to write or improve documentation and docstrings
 - Using AI to help debug failing tests

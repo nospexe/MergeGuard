@@ -1,7 +1,7 @@
 /**
  * MergeGuard 3-Agent LLM Pipeline
  * ================================
- * Sequential pipeline using Anthropic Claude claude-sonnet-4-20250514:
+ * Sequential pipeline using local deepseek-coder (or generic API):
  *   Agent 1 (Blast Interpreter)  → structural risk summary
  *   Agent 2 (Pattern Explainer)  → historical context explanation
  *   Agent 3 (Orchestrator)       → final recommendation + risk level
@@ -142,7 +142,7 @@ export async function runLLMPipeline(
   postMortem: PostMortemData,
   callbacks: PipelineCallbacks
 ): Promise<{ brief: string; riskLevel: RiskLevel }> {
-  const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_BACKEND_API_KEY;
 
   if (!apiKey) {
     // Demo mode — use precomputed output
@@ -162,7 +162,7 @@ export async function runLLMPipeline(
       JSON.stringify(blastRadius, null, 2)
     );
 
-    const agent1Output = await streamAnthropicCall(apiKey, agent1Prompt, (token) => {
+    const agent1Output = await streamLLMCall(apiKey, agent1Prompt, (token) => {
       callbacks.onToken(token);
       fullOutput += token;
     });
@@ -177,7 +177,7 @@ export async function runLLMPipeline(
       JSON.stringify(postMortem, null, 2)
     );
 
-    const agent2Output = await streamAnthropicCall(apiKey, agent2Prompt, (token) => {
+    const agent2Output = await streamLLMCall(apiKey, agent2Prompt, (token) => {
       callbacks.onToken(token);
       fullOutput += token;
     });
@@ -191,7 +191,7 @@ export async function runLLMPipeline(
       .replace("{{AGENT1_OUTPUT}}", agent1Output)
       .replace("{{AGENT2_OUTPUT}}", agent2Output);
 
-    const agent3Output = await streamAnthropicCall(apiKey, agent3Prompt, (token) => {
+    const agent3Output = await streamLLMCall(apiKey, agent3Prompt, (token) => {
       callbacks.onToken(token);
       fullOutput += token;
     });
@@ -209,23 +209,21 @@ export async function runLLMPipeline(
   }
 }
 
-// ─── Anthropic API Streaming Call ───────────────────────
+// ─── Generic LLM API Streaming Call ───────────────────────
 
-async function streamAnthropicCall(
+async function streamLLMCall(
   apiKey: string,
   prompt: string,
   onToken: (token: string) => void
 ): Promise<string> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetch("http://localhost:8000/api/llm/stream", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
+      "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "deepseek-coder",
       max_tokens: 1024,
       stream: true,
       messages: [{ role: "user", content: prompt }],
@@ -233,7 +231,7 @@ async function streamAnthropicCall(
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic API error: ${response.status}`);
+    throw new Error(`Backend API error: ${response.status}`);
   }
 
   const reader = response.body?.getReader();
