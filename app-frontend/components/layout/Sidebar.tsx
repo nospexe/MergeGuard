@@ -29,9 +29,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const handleSignOut = () => {
-    localStorage.removeItem("mg_session");
-    sessionStorage.removeItem("mg_session");
-    window.location.href = "/signin";
+    window.location.href = "/";
   };
 
   return (

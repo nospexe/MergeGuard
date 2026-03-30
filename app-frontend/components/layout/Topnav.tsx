@@ -74,10 +74,10 @@ export default function Topnav() {
             </div>
           ) : (
             <Link
-              href="/signin"
+              href="/dashboard"
               className="rounded-md bg-[#00d4ff] px-4 py-1.5 text-[12px] font-semibold text-[#0a0b0d] transition-all hover:bg-[#00bfe8]"
             >
-              Sign In
+              Try Demo
             </Link>
           )}
         </div>

@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "@auth/core": "^0.36.0",
     "@convex-dev/auth": "^0.0.74",
     "clsx": "^2.1.1",

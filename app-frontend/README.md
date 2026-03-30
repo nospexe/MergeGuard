@@ -17,17 +17,17 @@
 │                        MergeGuard Architecture                       │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────┐     │
-│  │  Landing Page │     │  Auth Pages  │     │  App Pages       │     │
-│  │  (page.tsx)   │     │  /signin     │     │  /dashboard      │     │
-│  │              │     │  /signup     │     │  /analyze        │     │
-│  │  • Hero      │     │              │     │  /history        │     │
-│  │  • Problem   │     │  • Email +   │     │                  │     │
-│  │  • Engines   │     │    Password  │     │  ┌────────────┐  │     │
-│  │  • How Works │     │  • Remember  │     │  │ D3.js      │  │     │
-│  │  • Tech      │     │    Me check  │     │  │ Blast      │  │     │
-│  │  • FOSS      │     │              │     │  │ Radius     │  │     │
-│  │  • CTA       │     └──────────────┘     │  │ Graph      │  │     │
+│  ┌──────────────┐                          ┌──────────────────┐     │
+│  │  Landing Page │                          │  App Pages       │     │
+│  │  (page.tsx)   │                          │  /dashboard      │     │
+│  │              │                          │  /analyze        │     │
+│  │  • Hero      │                          │  /history        │     │
+│  │  • Problem   │                          │                  │     │
+│  │  • Engines   │                          │  ┌────────────┐  │     │
+│  │  • How Works │                          │  │ D3.js      │  │     │
+│  │  • Tech      │                          │  │ Blast      │  │     │
+│  │  • FOSS      │                          │  │ Radius     │  │     │
+│  │  • CTA       │                          │  │ Graph      │  │     │
 │  └──────────────┘                          │  └────────────┘  │     │
 │                                            │  ┌────────────┐  │     │
 │                                            │  │ Recharts   │  │     │
@@ -50,12 +50,12 @@
 │  │  • analyses                │     │    Interpreter             │  │
 │  │  • fingerprints            │     │         ↓                  │  │
 │  │  • llmStreams              │     │  Agent 2: Pattern          │  │
-│  │  • users (auth)            │     │    Explainer               │  │
-│  │                            │     │         ↓                  │  │
-│  │  Features:                 │     │  Agent 3: Orchestrator     │  │
-│  │  • Real-time subscriptions │     │    → GREEN/YELLOW/RED      │  │
-│  │  • Type-safe queries       │     │                            │  │
-│  │  • Auth with sessions      │     │  Model: Ollama (deepseek-coder)             │  │
+│  │                            │     │    Explainer               │  │
+│  │  Features:                 │     │         ↓                  │  │
+│  │  • Real-time subscriptions │     │  Agent 3: Orchestrator     │  │
+│  │  • Type-safe queries       │     │    → GREEN/YELLOW/RED      │  │
+│  │                            │     │                            │  │
+│  │                            │     │  Model: Ollama             │  │
 │  └────────────────────────────┘     │  Streaming: token-by-token │  │
 │                                      └────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
@@ -95,7 +95,7 @@ OLLAMA_HOST=http://localhost:11434 OLLAMA_MODEL=deepseek-coder python backend/ap
 | **Frontend** | Next.js 14 (App Router), React 18, Tailwind CSS 3 |
 | **Visualizations** | D3.js v7 (blast radius graph), Recharts (timeline) |
 | **Database** | Convex (real-time, typed, serverless) |
-| **Auth** | Convex Auth (email/password, remember me) |
+| **Auth** | Out of scope for this submission (Convex Auth scaffold exists in `convex/auth.ts`) |
 | **LLM** | Ollama (deepseek-coder) via LangGraph |
 | **Deployment** | Vercel (frontend) + Convex Cloud |
 | **License** | MIT |
@@ -139,11 +139,9 @@ app-frontend/
 │   ├── analyze/
 │   │   ├── layout.tsx
 │   │   └── page.tsx          # New analysis form
-│   ├── history/
-│   │   ├── layout.tsx
-│   │   └── page.tsx          # Past analyses table
-│   ├── signin/page.tsx       # Sign in
-│   └── signup/page.tsx       # Sign up
+│   └── history/
+│       ├── layout.tsx
+│       └── page.tsx          # Past analyses table
 ├── components/
 │   ├── BlastRadiusGraph.tsx  # D3.js force graph
 │   ├── PostMortemTimeline.tsx # Recharts timeline

@@ -64,8 +64,8 @@ Paste any public GitHub repo URL directly into the dashboard — MergeGuard will
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | Next.js 14 (App Router), Tailwind CSS, D3.js, Recharts, Framer Motion |
-| **Database** | [Convex](https://convex.dev) (analyses, fingerprints, LLM streams, auth) |
-| **Auth** | Convex Auth with email/password |
+| **Database** | [Convex](https://convex.dev) (analyses, fingerprints, LLM streams) |
+| **Auth** | Out of scope (Convex Auth scaffold exists for future use) |
 | **Backend API** | FastAPI (Python) with Pydantic validation and security middleware |
 | **Analysis Engines** | Python AST, `rope`, `mlxtend` FP-Growth |
 | **LLM** | Ollama (local) via LangGraph 3-agent pipeline |
@@ -150,11 +150,10 @@ MergeGuard/
 │   │   ├── dashboard/           # Main dashboard, blast-radius, postmortem, settings
 │   │   ├── analyze/             # Live analysis page
 │   │   ├── history/             # Past analysis history
-│   │   ├── signin/ & signup/    # Auth pages
 │   ├── components/              # BlastRadiusGraph, PostMortemTimeline, LLMPanel, etc.
-│   ├── convex/                  # Schema, auth, queries, mutations, seed data
+│   ├── convex/                  # Schema, queries, mutations, seed data
 │   │   ├── schema.ts            # analyses, fingerprints, llmStreams tables
-│   │   ├── auth.ts              # Convex Auth (email/password)
+│   │   ├── auth.ts              # Convex Auth scaffold (not wired to frontend)
 │   │   └── seed.ts              # Demo data seeder
 │   └── lib/                     # Types, utilities, mock data
 ├── .github/workflows/           # CI (lint + test + build), Coverage, CD (Docker)
@@ -195,7 +194,7 @@ MergeGuard/
 - **GitHub URL whitelisting** — Only `https://github.com/` URLs are accepted for cloning
 - **Response headers** — `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, `Referrer-Policy`
 - **Error handling** — Internal errors never leak stack traces to clients
-- **Auth** — Convex Auth with email/password for the dashboard
+- **Auth** — Authentication is **out of scope** for this FOSS Hack submission. A Convex Auth scaffold (`convex/auth.ts`) exists for future implementation. The app is fully public.
 
 ---
 
