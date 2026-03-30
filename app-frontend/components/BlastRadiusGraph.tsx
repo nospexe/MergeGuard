@@ -50,7 +50,8 @@ export default function BlastRadiusGraph({
     y: number;
     node: SimNode;
   } | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  // Only a ref is needed — no re-render required when selection changes
+  // (D3 handles the visual highlight directly via DOM manipulation)
   const selectedNodeRef = useRef<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: propWidth || 500, height: propHeight || 500 });
 
@@ -78,11 +79,10 @@ export default function BlastRadiusGraph({
       if (!nodeId) {
         svg.selectAll(".node-circle").attr("opacity", 1);
         svg.selectAll(".link-line").attr("opacity", 0.3);
-        setSelectedNode(null);
+        selectedNodeRef.current = null;
         return;
       }
 
-      setSelectedNode(nodeId);
       selectedNodeRef.current = nodeId;
 
       // Find connected nodes

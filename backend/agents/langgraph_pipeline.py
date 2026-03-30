@@ -216,10 +216,32 @@ async def blast_interpreter_agent_async(state: PipelineState) -> dict:
 
 
 def blast_interpreter_agent(state: PipelineState) -> dict:
-    """Sync wrapper for Agent 1 — used by the LangGraph pipeline."""
-    return asyncio.get_event_loop().run_until_complete(
-        blast_interpreter_agent_async(state)
-    )
+    """
+    Agent 1 — Blast Radius Interpreter (sync).
+
+    Uses ollama.Client (synchronous). Safe because LangGraph invoke()
+    runs in a thread pool via FastAPI's sync route handler.
+    """
+    logger.info("Agent 1 — Blast Interpreter running (sync)")
+
+    prompt = _build_blast_prompt(state["blast_data"])
+
+    try:
+        client   = ollama.Client(host=OLLAMA_HOST)
+        response = client.chat(
+            model=OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        structural_risk = response["message"]["content"].strip()
+    except Exception as exc:
+        logger.warning("Agent 1 Ollama call failed: %s", exc)
+        structural_risk = (
+            f"Blast radius analysis unavailable (LLM error). "
+            f"Risk tier from engine: {state['blast_data'].get('risk_tier', 'unknown')}."
+        )
+
+    logger.info("Agent 1 complete — structural_risk: %s", structural_risk[:80])
+    return {"structural_risk": structural_risk}
 
 
 async def pattern_explainer_agent_async(state: PipelineState) -> dict:
@@ -253,10 +275,32 @@ async def pattern_explainer_agent_async(state: PipelineState) -> dict:
 
 
 def pattern_explainer_agent(state: PipelineState) -> dict:
-    """Sync wrapper for Agent 2 — used by the LangGraph pipeline."""
-    return asyncio.get_event_loop().run_until_complete(
-        pattern_explainer_agent_async(state)
-    )
+    """
+    Agent 2 — Pattern Explainer (sync).
+
+    Uses ollama.Client (synchronous). Safe because LangGraph invoke()
+    runs in a thread pool via FastAPI's sync route handler.
+    """
+    logger.info("Agent 2 — Pattern Explainer running (sync)")
+
+    prompt = _build_pattern_prompt(state["postmortem_data"])
+
+    try:
+        client   = ollama.Client(host=OLLAMA_HOST)
+        response = client.chat(
+            model=OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        historical_risk = response["message"]["content"].strip()
+    except Exception as exc:
+        logger.warning("Agent 2 Ollama call failed: %s", exc)
+        historical_risk = (
+            "Historical pattern analysis unavailable (LLM error). "
+            f"{len(state['postmortem_data'])} rules found by engine."
+        )
+
+    logger.info("Agent 2 complete — historical_risk: %s", historical_risk[:80])
+    return {"historical_risk": historical_risk}
 
 
 def orchestrator_agent(state: PipelineState) -> dict:
