@@ -1,6 +1,0 @@
-﻿origin
-origin/dev/aayush-llm-infra
-origin/dev/armaan-post-mortem
-origin/dev/balaa-frontend
-origin/dev/navin-blast-radius
-origin/main

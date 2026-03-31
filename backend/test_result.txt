@@ -1,4 +1,0 @@
-﻿score=0.0612, tier=LOW
-direct=5, transitive=0, edges=40
-direct: ['tests.conftest', 'tests.test_api_helpers', 'tests.test_blast_radius', 'tests.test_blast_radius_extended', 'tests.test_coverage_overlay']
-warnings: []

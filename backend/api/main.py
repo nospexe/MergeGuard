@@ -59,6 +59,10 @@ def find_python_source_root(repo_path: str) -> str:
     """
     root = Path(repo_path).resolve()
 
+    if not root.exists() or not root.is_dir():
+        logger.warning("Python source root: %s (does not exist, fallback to repo root)", root)
+        return str(root)
+
     # Check if repo root itself is a valid Python source root
     if _is_python_source_root(root):
         logger.info("Python source root: %s (repo root)", root)

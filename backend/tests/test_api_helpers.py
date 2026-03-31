@@ -130,11 +130,11 @@ def test_resolve_changed_symbols_fallback(tmp_path):
     subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(["git", "commit", "-m", "init"], cwd=tmp_path, check=True, capture_output=True)
 
-    result = resolve_changed_symbols(str(tmp_path), "HEAD", "HEAD")
-    assert isinstance(result, list)
+    symbols, tables, source_root = resolve_changed_symbols(str(tmp_path), "HEAD", "HEAD")
+    assert isinstance(symbols, list)
 
 
 def test_resolve_changed_symbols_bad_repo():
     """Non-existent repo should fallback gracefully."""
-    result = resolve_changed_symbols("/nonexistent", "main", "dev")
-    assert result == ["dev"]
+    symbols, tables, source_root = resolve_changed_symbols("/nonexistent", "main", "dev")
+    assert symbols == []
